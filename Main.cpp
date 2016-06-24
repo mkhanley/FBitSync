@@ -1,6 +1,7 @@
 #include <iostream>
 #include <libusb-1.0/libusb.h>
 #include <zconf.h>
+#include "Dongle.cpp"
 
 using namespace std;
 
@@ -72,17 +73,19 @@ int main() {
     res = libusb_bulk_transfer(handle, 0x82u, rdata, 32, &actual,2000);
     cout<< rdata <<endl;
     sleep(2);
-    wdata[0] = 0x01;
+    wdata[0] = 0x02;
     wdata[1] = 0x01;
-    //res = libusb_bulk_transfer(handle,0x02, wdata, 3, &actual, 2000);
+    res = libusb_bulk_transfer(handle,0x02, wdata, 3, &actual, 2000);
     if(res == 0 && actual == 3) //we wrote the 4 bytes successfully
         cout<<"Writing Successful!"<<endl;
     else
         cout<<"Write Error"<<endl;
     res = libusb_bulk_transfer(handle, 0x82u, rdata, 32, &actual,2000);
     cout<< rdata <<endl;
-
+    Dongle f;
+    f.print();
     res = libusb_release_interface(handle, 0);
+    res = libusb_release_interface(handle, 1);
     libusb_close(handle);
     return 0;
 }
