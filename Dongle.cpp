@@ -1,7 +1,5 @@
-//
-// Created by mark on 24/06/16.
-//
 #include <iostream>
+#include <iomanip>
 #include <libusb-1.0/libusb.h>
 
 using namespace std;
@@ -16,8 +14,7 @@ private:
     uint8_t *writeData;
     uint8_t readEndpoint = 0x82;
     uint8_t writeEndpoint = 0x02;
-
-
+    int readDataLen = 0;
 
     bool initUSB(){
         libusb_init(NULL);
@@ -89,6 +86,28 @@ public:
         libusb_close(handle);
     }
 
+    bool disconnect(){
+        cout << "Attempting to disconnect" << endl;
+        uint8_t wdata[] = {0x02, 0x02};
+        write(wdata, 2);
+        read();
+        exhaust();
+        return true;
+    }
+
+    void exhaust(){
+        int readData = 1;
+        while (readData > 0)
+            readData = read();
+    }
+
+    bool getDongleInfo(){
+        cout << "Requesting Info" << endl;
+        uint8_t wdata[] = {0x02, 0x01};
+        write(wdata, 2);
+        read();
+    }
+
     int write(uint8_t * data, int dataLen){
         int dataWritten = 0;
         int res = libusb_bulk_transfer(handle,writeEndpoint, data, dataLen, &dataWritten, 2000);
@@ -99,13 +118,30 @@ public:
         return res;
     }
 
+    bool isStatus(){
+        return readData[1] == 0x01;
+    }
+
     int read(){
-        int dataRead = 0;
-        int res = libusb_bulk_transfer(handle,readEndpoint, readData, 32, &dataRead, 2000);
-        if(res == 0 && dataRead == 32) //we wrote the 4 bytes successfully
+        int res = libusb_bulk_transfer(handle,readEndpoint, readData, 32, &readDataLen, 2000);
+        if(res == 0 && readDataLen == 32){
             cout<<"Read Successful!"<<endl;
-        else
-            cout<<"Read Error"<<endl;
-        return res;
+            if(isStatus())
+                cout << readData << endl;
+            else
+                print(readData);
+            return readDataLen;
+        }
+        else {
+            cout << "Read Error" << endl;
+            return -1;
+        }
+    }
+
+    void print(uint8_t * data){
+        for (int i = 1; i < data[0]; ++i) {
+            cout << hex << (int)data[i] << " " ;
+        }
+        cout << endl;
     }
 };

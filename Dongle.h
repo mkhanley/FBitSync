@@ -1,6 +1,3 @@
-//
-// Created by mark on 24/06/16.
-//
 #include <iostream>
 
 #ifndef FITBIT_DONGLE_H
@@ -8,11 +5,16 @@
 
 
 class Dongle {
-public:Dongle(){
+private:
+    bool initUSB();
+    int releaseInterface(int interface);
+public:
+    Dongle();
 
-    }
+    int read();
+
+    int write(uint8_t * data, int dataLen);
 };
 
-void print(){}
 
 #endif //FITBIT_DONGLE_H

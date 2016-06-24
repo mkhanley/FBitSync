@@ -1,6 +1,4 @@
 #include <iostream>
-#include <libusb-1.0/libusb.h>
-#include <zconf.h>
 #include "Dongle.cpp"
 
 using namespace std;
@@ -10,9 +8,11 @@ uint16_t prodID = 64257;
 
 int main() {
     Dongle f;
-    uint8_t wdata[] = {0x02, 0x02};
+    f.disconnect();
+    f.getDongleInfo();
+    /*uint8_t wdata[] = {0x02, 0x02};
     f.write(wdata, 2);
-    f.read();
+    f.read();*/
     /*libusb_init(NULL);
 
     // discover devices
