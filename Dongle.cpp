@@ -27,6 +27,11 @@ private:
         }
     }
 
+    int releaseInterface(int interface){
+        int res = libusb_release_interface(handle, interface);
+        return res;
+    }
+
     bool detachKernel(int interface){
         bool detached = false;
         if(libusb_kernel_driver_active(handle, interface) == 1) { //find out if kernel driver is attached
@@ -46,12 +51,13 @@ private:
         if(res < 0)
             cout << "Cannot Claim Interface" << interface << endl;
         else
-            cout << "Interface" << interface <<"claimed"  <<endl;
+            cout << "Interface " << interface <<" claimed"  <<endl;
     }
 
 public:
 
     Dongle(){
+        cout << "Initialising Dongle" << endl;
         if(initUSB()){
             for (int i = 0; i < 2; i++) {
                 detachKernel(i);
@@ -60,6 +66,13 @@ public:
         }
     }
 
+    ~Dongle(){
+        cout << "Closing Dongle" << endl;
+        for (int i = 0; i < 2; ++i) {
+            releaseInterface(i);
+        }
+        libusb_close(handle);
+    }
     void print(){
         std::cout << "TEST" << std::endl;
     }

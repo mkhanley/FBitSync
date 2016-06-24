@@ -9,7 +9,8 @@ uint16_t venID = 9863;
 uint16_t prodID = 64257;
 
 int main() {
-    libusb_init(NULL);
+    Dongle f;
+    /*libusb_init(NULL);
 
     // discover devices
     libusb_device **list;
@@ -86,6 +87,6 @@ int main() {
     f.print();
     res = libusb_release_interface(handle, 0);
     res = libusb_release_interface(handle, 1);
-    libusb_close(handle);
+    libusb_close(handle);*/
     return 0;
 }
