@@ -12,6 +12,11 @@ private:
     uint16_t venID = 9863;
     uint16_t prodID = 64257;
     libusb_device_handle *handle;
+    uint8_t *readData;
+    uint8_t *writeData;
+    uint8_t readEndpoint = 0x82;
+    uint8_t writeEndpoint = 0x02;
+
 
 
     bool initUSB(){
@@ -52,6 +57,7 @@ private:
             cout << "Cannot Claim Interface" << interface << endl;
         else
             cout << "Interface " << interface <<" claimed"  <<endl;
+        return res;
     }
 
 public:
@@ -59,9 +65,18 @@ public:
     Dongle(){
         cout << "Initialising Dongle" << endl;
         if(initUSB()){
+            int detached = 0;
             for (int i = 0; i < 2; i++) {
-                detachKernel(i);
-                claimInterface(i);
+                if(detachKernel(i))
+                    if(claimInterface(i) == 0)
+                        detached++;
+            }
+            if(detached == 2){
+                readData = (uint8_t *)calloc(32, 1);
+                writeData = (uint8_t *)calloc(32, 1);
+            }
+            else{
+                cout << "Error Initialising dongle" << endl;
             }
         }
     }
@@ -73,15 +88,24 @@ public:
         }
         libusb_close(handle);
     }
-    void print(){
-        std::cout << "TEST" << std::endl;
-    }
 
-    int write(){
-
+    int write(uint8_t * data, int dataLen){
+        int dataWritten = 0;
+        int res = libusb_bulk_transfer(handle,writeEndpoint, data, dataLen, &dataWritten, 2000);
+        if(res == 0 && dataWritten == 2) //we wrote the 4 bytes successfully
+            cout<<"Writing Successful!"<<endl;
+        else
+            cout<<"Write Error"<<endl;
+        return res;
     }
 
     int read(){
-
+        int dataRead = 0;
+        int res = libusb_bulk_transfer(handle,readEndpoint, readData, 32, &dataRead, 2000);
+        if(res == 0 && dataRead == 32) //we wrote the 4 bytes successfully
+            cout<<"Read Successful!"<<endl;
+        else
+            cout<<"Read Error"<<endl;
+        return res;
     }
 };
