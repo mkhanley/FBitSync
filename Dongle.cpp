@@ -3,7 +3,6 @@
 #include <libusb-1.0/libusb.h>
 #include <boost/uuid/uuid.hpp>
 #include <algorithm>
-#include <iterator>
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
@@ -180,4 +179,20 @@ public:
     }
 
 
+};
+
+class Message{
+private:
+    uint8_t length;
+    uint8_t * instruction;
+    uint8_t * payload;
+
+public:
+    Message(uint8_t length, uint8_t * instruction, uint8_t * payload){
+
+    }
+
+    ~Message(){
+        
+    }
 };
