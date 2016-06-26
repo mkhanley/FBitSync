@@ -1,6 +1,11 @@
 #include <iostream>
 #include <iomanip>
 #include <libusb-1.0/libusb.h>
+#include <boost/uuid/uuid.hpp>
+#include <algorithm>
+#include <iterator>
+#include <boost/lexical_cast.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 using namespace std;
 
@@ -15,6 +20,7 @@ private:
     uint8_t readEndpoint = 0x82;
     uint8_t writeEndpoint = 0x02;
     int readDataLen = 0;
+    boost::uuids::uuid uuid;
 
     bool initUSB(){
         libusb_init(NULL);
@@ -57,6 +63,18 @@ private:
         return res;
     }
 
+    void reverseArray(uint8_t * array, int size){
+        if(size > 1){
+            int end = size - 1;
+            for (int i = 0; i < size/2; i++) {
+                uint8_t a = array[i];
+                uint8_t temp = array[end - i];
+                array[size - i] = a;
+                array[i] = temp;
+            }
+        }
+    }
+
 public:
 
     Dongle(){
@@ -71,6 +89,8 @@ public:
             if(detached == 2){
                 readData = (uint8_t *)calloc(32, 1);
                 writeData = (uint8_t *)calloc(32, 1);
+                string uuidStr = "adab0000-6e7d-4601-bda2-bffaa68956ba";
+                uuid = boost::lexical_cast<boost::uuids::uuid>(uuidStr);
             }
             else{
                 cout << "Error Initialising dongle" << endl;
@@ -106,6 +126,19 @@ public:
         uint8_t wdata[] = {0x02, 0x01};
         write(wdata, 2);
         read();
+        return true;
+    }
+
+    bool discover(){
+        uint8_t data[26];
+        data[0] = 26;
+        data[1] = 4;
+        uint8_t *uuidData = (uint8_t *)malloc(16);
+        memcpy(uuidData, uuid.data, 16);
+        reverseArray(uuidData, 16);
+        memcpy(&data[2],uuid.data, 16);
+        cout << endl;
+        return true;
     }
 
     int write(uint8_t * data, int dataLen){
@@ -139,9 +172,12 @@ public:
     }
 
     void print(uint8_t * data){
+        cout << "Received " << (int)data[0] << " bytes" << endl;
         for (int i = 1; i < data[0]; ++i) {
             cout << hex << (int)data[i] << " " ;
         }
         cout << endl;
     }
+
+
 };

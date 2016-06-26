@@ -10,6 +10,7 @@ int main() {
     Dongle f;
     f.disconnect();
     f.getDongleInfo();
+    f.discover();
     /*uint8_t wdata[] = {0x02, 0x02};
     f.write(wdata, 2);
     f.read();*/
