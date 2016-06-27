@@ -8,6 +8,45 @@
 
 using namespace std;
 
+class Message{
+private:
+    uint8_t length;
+    int instruction;
+    uint8_t *insArr;
+    uint8_t * payload;
+    vector<uint8_t> messageData;
+
+    void insToArr(){
+        insArr = static_cast<uint8_t *>(static_cast<void*>(&instruction));
+    }
+
+public:
+    Message(uint8_t length, int instruction, uint8_t * payload){
+        this->length = length;
+        this->instruction = instruction;
+        this->payload = payload;
+        this->messageData = vector<uint8_t>();
+        insToArr();
+        //buildMessage();
+    }
+
+    ~Message(){
+        messageData.clear();
+    }
+
+    uint8_t* buildMessage() {
+        messageData.push_back(length);
+        if(instruction > 0xFF){
+            messageData.push_back(insArr[1]);
+            messageData.push_back(insArr[0]);
+        }
+        else
+            messageData.push_back(insArr[0]);
+        messageData.insert(messageData.end(), &payload[0], &payload[length - 2]);
+        return messageData.data();
+    }
+};
+
 class Dongle{
 
 private:
@@ -107,7 +146,9 @@ public:
 
     bool disconnect(){
         cout << "Attempting to disconnect" << endl;
-        uint8_t wdata[] = {0x02, 0x02};
+        Message disconnectM = Message(2,2,NULL);
+        uint8_t * wdata = disconnectM.buildMessage();
+        //uint8_t wdata[] = {0x02, 0x02};
         write(wdata, 2);
         read();
         exhaust();
@@ -122,7 +163,9 @@ public:
 
     bool getDongleInfo(){
         cout << "Requesting Info" << endl;
-        uint8_t wdata[] = {0x02, 0x01};
+        Message message = Message(2,1,NULL);
+        uint8_t * wdata = message.buildMessage();
+        //uint8_t wdata[] = {0x02, 0x01};
         write(wdata, 2);
         read();
         return true;
@@ -179,20 +222,4 @@ public:
     }
 
 
-};
-
-class Message{
-private:
-    uint8_t length;
-    uint8_t * instruction;
-    uint8_t * payload;
-
-public:
-    Message(uint8_t length, uint8_t * instruction, uint8_t * payload){
-
-    }
-
-    ~Message(){
-        
-    }
 };
