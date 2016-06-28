@@ -172,13 +172,23 @@ public:
     }
 
     bool discover(){
-        uint8_t data[26];
-        data[0] = 26;
-        data[1] = 4;
-        uint8_t *uuidData = (uint8_t *)malloc(16);
-        memcpy(uuidData, uuid.data, 16);
-        reverseArray(uuidData, 16);
-        memcpy(&data[2],uuid.data, 16);
+        vector<uint8_t> payload = vector<uint8_t>();
+        payload.reserve(26);
+        for (int i = 15; i > -1 ; i--) {
+            payload.push_back(uuid.data[i]);
+        }
+        payload.push_back(0x00);
+        payload.push_back(0xfb);
+        payload.push_back(0x01);
+        payload.push_back(0xfb);
+        payload.push_back(0x02);
+        payload.push_back(0xfb);
+        payload.push_back(0xa0);
+        payload.push_back(0x0f);
+        Message message = Message(26, 4, payload.data());
+        uint8_t * messageData = message.buildMessage();
+        write(messageData, 26);
+        exhaust();
         cout << endl;
         return true;
     }
