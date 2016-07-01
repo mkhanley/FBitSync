@@ -82,7 +82,7 @@ private:
         bool detached = false;
         if(libusb_kernel_driver_active(handle, interface) == 1) { //find out if kernel driver is attached
             cout<<"Kernel Driver Active"<<endl;
-            if(libusb_detach_kernel_driver(handle, 0) == interface) { //detach it
+            if(libusb_detach_kernel_driver(handle, interface) == 0) { //detach it
                 cout << "Kernel Driver Detached!" << endl;
                 detached = true;
             }
@@ -133,6 +133,9 @@ public:
             else{
                 cout << "Error Initialising dongle" << endl;
             }
+        }
+        else{
+            exit(-1);
         }
     }
 
@@ -187,7 +190,22 @@ public:
         payload.push_back(0x0f);
         Message message = Message(26, 4, payload.data());
         uint8_t * messageData = message.buildMessage();
+        cout << "Starting Discovery" << endl;
         write(messageData, 26);
+        vector<uint8_t> trackers = vector<uint8_t>();
+        while(read() != -1){
+            if(readData[0] == 0x03){
+                //Finished discovering trackers
+                break;
+            }
+            if(!isStatus())
+                copy(readData, readData + readDataLen, back_inserter(trackers));
+        }
+        if(readData[0] == 0x03){
+            //Check array size
+            exit(-1);
+            cout << trackers.size() << endl;
+        }
         exhaust();
         cout << endl;
         return true;
@@ -196,7 +214,7 @@ public:
     int write(uint8_t * data, int dataLen){
         int dataWritten = 0;
         int res = libusb_bulk_transfer(handle,writeEndpoint, data, dataLen, &dataWritten, 2000);
-        if(res == 0 && dataWritten == 2) //we wrote the 4 bytes successfully
+        if(res == 0 && dataWritten == dataLen) //we wrote the bytes successfully
             cout<<"Writing Successful!"<<endl;
         else
             cout<<"Write Error"<<endl;
