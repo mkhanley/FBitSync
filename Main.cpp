@@ -1,6 +1,7 @@
 #include <iostream>
 #include "Dongle.h"
 
+
 using namespace std;
 
 int main() {
@@ -8,6 +9,7 @@ int main() {
     fbDongle.disconnect();
     fbDongle.getDongleInfo();
     fbDongle.discover();
+    Tracker tracker;
     /*uint8_t wdata[] = {0x02, 0x02};
     f.write(wdata, 2);
     f.read();*/

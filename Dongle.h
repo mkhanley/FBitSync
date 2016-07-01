@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include "Tracker.h"
+
 #ifndef FITBIT_DONGLE_H
 #define FITBIT_DONGLE_H
 
@@ -215,7 +217,7 @@ bool Dongle::isStatus(){
 
 int Dongle::read(){
     int res = libusb_bulk_transfer(handle,readEndpoint, readData, 32, &readDataLen, 2000);
-    if(res == 0 && readDataLen == 32){
+    if(res == 0 && readDataLen > 0){
         cout<<"Read Successful!"<<endl;
         if(isStatus())
             cout << readData << endl;
