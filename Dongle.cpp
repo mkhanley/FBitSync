@@ -16,36 +16,44 @@ private:
     uint8_t * payload;
     vector<uint8_t> messageData;
 
-    void insToArr(){
-        insArr = static_cast<uint8_t *>(static_cast<void*>(&instruction));
-    }
+    void insToArr();
 
 public:
-    Message(uint8_t length, int instruction, uint8_t * payload){
-        this->length = length;
-        this->instruction = instruction;
-        this->payload = payload;
-        this->messageData = vector<uint8_t>();
-        insToArr();
-        //buildMessage();
-    }
+    Message(uint8_t length, int instruction, uint8_t * payload);
 
-    ~Message(){
-        messageData.clear();
-    }
+    ~Message();
 
-    uint8_t* buildMessage() {
-        messageData.push_back(length);
-        if(instruction > 0xFF){
-            messageData.push_back(insArr[1]);
-            messageData.push_back(insArr[0]);
-        }
-        else
-            messageData.push_back(insArr[0]);
-        messageData.insert(messageData.end(), &payload[0], &payload[length - 2]);
-        return messageData.data();
-    }
+    uint8_t* buildMessage();
 };
+
+Message::Message(uint8_t length, int instruction, uint8_t * payload){
+    this->length = length;
+    this->instruction = instruction;
+    this->payload = payload;
+    this->messageData = vector<uint8_t>();
+    insToArr();
+    //buildMessage();
+}
+
+Message::~Message(){
+    messageData.clear();
+}
+
+void Message::insToArr(){
+    insArr = static_cast<uint8_t *>(static_cast<void*>(&instruction));
+}
+
+uint8_t* Message::buildMessage() {
+    messageData.push_back(length);
+    if(instruction > 0xFF){
+        messageData.push_back(insArr[1]);
+        messageData.push_back(insArr[0]);
+    }
+    else
+        messageData.push_back(insArr[0]);
+    messageData.insert(messageData.end(), &payload[0], &payload[length - 2]);
+    return messageData.data();
+}
 
 class Dongle{
 
@@ -115,139 +123,157 @@ private:
 
 public:
 
-    Dongle(){
-        cout << "Initialising Dongle" << endl;
-        if(initUSB()){
-            int detached = 0;
-            for (int i = 0; i < 2; i++) {
-                if(detachKernel(i))
-                    if(claimInterface(i) == 0)
-                        detached++;
-            }
-            if(detached == 2){
-                readData = (uint8_t *)calloc(32, 1);
-                writeData = (uint8_t *)calloc(32, 1);
-                string uuidStr = "adab0000-6e7d-4601-bda2-bffaa68956ba";
-                uuid = boost::lexical_cast<boost::uuids::uuid>(uuidStr);
-            }
-            else{
-                cout << "Error Initialising dongle" << endl;
-            }
+    Dongle();
+
+    ~Dongle();
+
+    bool disconnect();
+
+    void exhaust();
+
+    bool getDongleInfo();
+
+    bool discover();
+
+    int write(uint8_t * data, int dataLen);
+
+    int read();
+
+    bool isStatus();
+
+    void print(uint8_t * data);
+};
+
+Dongle::Dongle(){
+    cout << "Initialising Dongle" << endl;
+    if(initUSB()){
+        int detached = 0;
+        for (int i = 0; i < 2; i++) {
+            if(detachKernel(i))
+            if(claimInterface(i) == 0)
+                detached++;
+        }
+        if(detached == 2){
+            readData = (uint8_t *)calloc(32, 1);
+            writeData = (uint8_t *)calloc(32, 1);
+            string uuidStr = "adab0000-6e7d-4601-bda2-bffaa68956ba";
+            uuid = boost::lexical_cast<boost::uuids::uuid>(uuidStr);
         }
         else{
-            exit(-1);
+            cout << "Error Initialising dongle" << endl;
         }
     }
-
-    ~Dongle(){
-        cout << "Closing Dongle" << endl;
-        for (int i = 0; i < 2; ++i) {
-            releaseInterface(i);
-        }
-        libusb_close(handle);
+    else{
+        exit(-1);
     }
+}
 
-    bool disconnect(){
-        cout << "Attempting to disconnect" << endl;
-        Message disconnectM = Message(2,2,NULL);
-        uint8_t * wdata = disconnectM.buildMessage();
-        //uint8_t wdata[] = {0x02, 0x02};
-        write(wdata, 2);
-        read();
-        exhaust();
-        return true;
+Dongle::~Dongle(){
+    cout << "Closing Dongle" << endl;
+    for (int i = 0; i < 2; ++i) {
+        releaseInterface(i);
     }
+    libusb_close(handle);
+}
 
-    void exhaust(){
-        int readData = 1;
-        while (readData > 0)
-            readData = read();
+bool Dongle::disconnect(){
+    cout << "Attempting to disconnect" << endl;
+    Message disconnectM = Message(2,2,NULL);
+    uint8_t * wdata = disconnectM.buildMessage();
+    //uint8_t wdata[] = {0x02, 0x02};
+    write(wdata, 2);
+    read();
+    exhaust();
+    return true;
+}
+
+void Dongle::exhaust(){
+    int readData = 1;
+    while (readData > 0)
+        readData = read();
+}
+
+bool Dongle::getDongleInfo(){
+    cout << "Requesting Info" << endl;
+    Message message = Message(2,1,NULL);
+    uint8_t * wdata = message.buildMessage();
+    //uint8_t wdata[] = {0x02, 0x01};
+    write(wdata, 2);
+    read();
+    return true;
+}
+
+bool Dongle::discover(){
+    vector<uint8_t> payload = vector<uint8_t>();
+    payload.reserve(26);
+    for (int i = 15; i > -1 ; i--) {
+        payload.push_back(uuid.data[i]);
     }
-
-    bool getDongleInfo(){
-        cout << "Requesting Info" << endl;
-        Message message = Message(2,1,NULL);
-        uint8_t * wdata = message.buildMessage();
-        //uint8_t wdata[] = {0x02, 0x01};
-        write(wdata, 2);
-        read();
-        return true;
-    }
-
-    bool discover(){
-        vector<uint8_t> payload = vector<uint8_t>();
-        payload.reserve(26);
-        for (int i = 15; i > -1 ; i--) {
-            payload.push_back(uuid.data[i]);
-        }
-        payload.push_back(0x00);
-        payload.push_back(0xfb);
-        payload.push_back(0x01);
-        payload.push_back(0xfb);
-        payload.push_back(0x02);
-        payload.push_back(0xfb);
-        payload.push_back(0xa0);
-        payload.push_back(0x0f);
-        Message message = Message(26, 4, payload.data());
-        uint8_t * messageData = message.buildMessage();
-        cout << "Starting Discovery" << endl;
-        write(messageData, 26);
-        vector<uint8_t> trackers = vector<uint8_t>();
-        while(read() != -1){
-            if(readData[0] == 0x03){
-                //Finished discovering trackers
-                break;
-            }
-            if(!isStatus())
-                copy(readData, readData + readDataLen, back_inserter(trackers));
-        }
+    payload.push_back(0x00);
+    payload.push_back(0xfb);
+    payload.push_back(0x01);
+    payload.push_back(0xfb);
+    payload.push_back(0x02);
+    payload.push_back(0xfb);
+    payload.push_back(0xa0);
+    payload.push_back(0x0f);
+    Message message = Message(26, 4, payload.data());
+    uint8_t * messageData = message.buildMessage();
+    cout << "Starting Discovery" << endl;
+    write(messageData, 26);
+    vector<uint8_t> trackers = vector<uint8_t>();
+    while(read() != -1){
         if(readData[0] == 0x03){
-            //Check array size
-            exit(-1);
-            cout << trackers.size() << endl;
+            //Finished discovering trackers
+            break;
         }
-        exhaust();
-        cout << endl;
-        return true;
+        if(!isStatus())
+            copy(readData, readData + readDataLen, back_inserter(trackers));
     }
+    if(readData[0] == 0x03){
+        //Check array size
+        exit(-1);
+        cout << trackers.size() << endl;
+    }
+    exhaust();
+    cout << endl;
+    return true;
+}
 
-    int write(uint8_t * data, int dataLen){
-        int dataWritten = 0;
-        int res = libusb_bulk_transfer(handle,writeEndpoint, data, dataLen, &dataWritten, 2000);
-        if(res == 0 && dataWritten == dataLen) //we wrote the bytes successfully
-            cout<<"Writing Successful!"<<endl;
+int Dongle::write(uint8_t * data, int dataLen){
+    int dataWritten = 0;
+    int res = libusb_bulk_transfer(handle,writeEndpoint, data, dataLen, &dataWritten, 2000);
+    if(res == 0 && dataWritten == dataLen) //we wrote the bytes successfully
+        cout<<"Writing Successful!"<<endl;
+    else
+        cout<<"Write Error"<<endl;
+    return res;
+}
+
+bool Dongle::isStatus(){
+    return readData[1] == 0x01;
+}
+
+int Dongle::read(){
+    int res = libusb_bulk_transfer(handle,readEndpoint, readData, 32, &readDataLen, 2000);
+    if(res == 0 && readDataLen == 32){
+        cout<<"Read Successful!"<<endl;
+        if(isStatus())
+            cout << readData << endl;
         else
-            cout<<"Write Error"<<endl;
-        return res;
+            print(readData);
+        return readDataLen;
     }
-
-    bool isStatus(){
-        return readData[1] == 0x01;
+    else {
+        cout << "Read Error" << endl;
+        return -1;
     }
+}
 
-    int read(){
-        int res = libusb_bulk_transfer(handle,readEndpoint, readData, 32, &readDataLen, 2000);
-        if(res == 0 && readDataLen == 32){
-            cout<<"Read Successful!"<<endl;
-            if(isStatus())
-                cout << readData << endl;
-            else
-                print(readData);
-            return readDataLen;
-        }
-        else {
-            cout << "Read Error" << endl;
-            return -1;
-        }
+void Dongle::print(uint8_t * data){
+    cout << "Received " << (int)data[0] << " bytes" << endl;
+    for (int i = 1; i < data[0]; ++i) {
+        cout << hex << (int)data[i] << " " ;
     }
-
-    void print(uint8_t * data){
-        cout << "Received " << (int)data[0] << " bytes" << endl;
-        for (int i = 1; i < data[0]; ++i) {
-            cout << hex << (int)data[i] << " " ;
-        }
-        cout << endl;
-    }
-
-
-};
+    cout << endl;
+}

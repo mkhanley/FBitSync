@@ -1,16 +1,13 @@
 #include <iostream>
-#include "Dongle.cpp"
+#include "Dongle.h"
 
 using namespace std;
 
-uint16_t venID = 9863;
-uint16_t prodID = 64257;
-
 int main() {
-    Dongle f;
-    f.disconnect();
-    f.getDongleInfo();
-    f.discover();
+    Dongle fbDongle;
+    fbDongle.disconnect();
+    fbDongle.getDongleInfo();
+    fbDongle.discover();
     /*uint8_t wdata[] = {0x02, 0x02};
     f.write(wdata, 2);
     f.read();*/
