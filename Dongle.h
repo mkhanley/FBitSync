@@ -82,6 +82,8 @@ private:
 
     void reverseArray(uint8_t * array, int size);
 
+    bool trackerPresent(vector<Tracker>, uint8_t*);
+
 public:
 
     Dongle();
@@ -182,21 +184,33 @@ bool Dongle::discover(){
     uint8_t * messageData = message.buildMessage();
     cout << "Starting Discovery" << endl;
     write(messageData, 26);
-    vector<uint8_t> trackers = vector<uint8_t>();
-    while(read() != -1){
-        if(readData[0] == 0x03){
-            //Finished discovering trackers
-            break;
+    vector<Tracker> trackers = vector<Tracker>();
+    int numOfTrackers = 0;
+    while(readData[1] != 0x02){
+        if(read()){
+            if(isStatus()){
+
+            }
+            else if(readData[1] == 0x03) {
+                Tracker discoveredTracker = Tracker(readData);
+                if(!trackerPresent(trackers, &readData[2])) {
+                    trackers.push_back(discoveredTracker);
+                    discoveredTracker.printID();
+                    numOfTrackers++;
+                }
+
+            }
         }
-        if(!isStatus())
-            copy(readData, readData + readDataLen, back_inserter(trackers));
     }
-    if(readData[0] == 0x03){
+    if(numOfTrackers == 0){
+        cout << "No trackers found" << endl;
+    }
+    if(numOfTrackers != trackers.size()){
         //Check array size
-        exit(-1);
+        //exit(-1);
         cout << trackers.size() << endl;
     }
-    exhaust();
+    //exhaust();
     cout << endl;
     return true;
 }
@@ -292,5 +306,14 @@ void Dongle::reverseArray(uint8_t * array, int size){
             array[i] = temp;
         }
     }
+}
+
+bool Dongle::trackerPresent(vector<Tracker> trackers, uint8_t* ID){
+    for(vector<Tracker>::iterator itt = trackers.begin(); itt != trackers.end(); itt++){
+        Tracker t = *itt;
+        if(memcmp(t.getID(), ID, 6) == 0)
+            return true;
+    }
+    return false;
 }
 #endif //FITBIT_DONGLE_H
