@@ -234,7 +234,7 @@ int Dongle::read(){
     if(res == 0 && readDataLen > 0){
         cout<<"Read Successful!"<<endl;
         if(isStatus())
-            cout << readData << endl;
+            cout << &readData[2] << endl;
         else
             print(readData);
         return readDataLen;
