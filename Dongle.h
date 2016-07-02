@@ -96,7 +96,9 @@ public:
 
     bool getDongleInfo();
 
-    bool discover();
+    vector<Tracker> discover();
+
+    bool linkTracker(Tracker);
 
     int write(uint8_t * data, int dataLen);
 
@@ -166,7 +168,7 @@ bool Dongle::getDongleInfo(){
     return true;
 }
 
-bool Dongle::discover(){
+vector<Tracker> Dongle::discover(){
     vector<uint8_t> payload = vector<uint8_t>();
     payload.reserve(26);
     for (int i = 15; i > -1 ; i--) {
@@ -195,10 +197,9 @@ bool Dongle::discover(){
                 Tracker discoveredTracker = Tracker(readData);
                 if(!trackerPresent(trackers, &readData[2])) {
                     trackers.push_back(discoveredTracker);
-                    discoveredTracker.printID();
+                    discoveredTracker.printInfo();
                     numOfTrackers++;
                 }
-
             }
         }
     }
@@ -210,9 +211,21 @@ bool Dongle::discover(){
         //exit(-1);
         cout << trackers.size() << endl;
     }
-    //exhaust();
-    cout << endl;
-    return true;
+    //Cancel Discovery
+    Message cancel = Message(2, 5, NULL);
+    uint8_t * cancelData = cancel.buildMessage();
+    write(cancelData, 2);
+    read();
+    return trackers;
+}
+
+bool Dongle::linkTracker(Tracker tracker){
+    if(!tracker)
+        return false;
+    vector<uint8_t> trackerData = vector<uint8_t>();
+    trackerData.reserve(12);
+    copy(trackerData.begin(), trackerData.begin() + 6, tracker.getID());
+    trackerData.push_back(tracker.get)
 }
 
 int Dongle::write(uint8_t * data, int dataLen){

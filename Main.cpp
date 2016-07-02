@@ -8,8 +8,9 @@ int main() {
     Dongle fbDongle;
     fbDongle.disconnect();
     fbDongle.getDongleInfo();
-    fbDongle.discover();
-    Tracker tracker;
+    vector<Tracker> trackers;
+    trackers = fbDongle.discover();
+    cout << trackers.size() << endl;
     /*uint8_t wdata[] = {0x02, 0x02};
     f.write(wdata, 2);
     f.read();*/
