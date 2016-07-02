@@ -56,9 +56,20 @@ uint8_t * Tracker::getID(){
     return trackerID;
 }
 
+uint8_t Tracker::getAddressType(){
+    return addressType;
+}
+
+uint8_t * Tracker::getAttributes(){
+    return attributes;
+}
+
+uint8_t * Tracker::getServiceUUID(){
+    return serviceUUID;
+}
 void Tracker::printID(){
     std::cout << "Tracker: ";
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++){
         //std::cout << std::hex << (int)(this->trackerID[i]) << " ";
         std::cout << std::hex << std::setfill('0') << std::setw(2)<< (int)(this->trackerID[i]) << " ";
     }

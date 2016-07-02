@@ -220,12 +220,18 @@ vector<Tracker> Dongle::discover(){
 }
 
 bool Dongle::linkTracker(Tracker tracker){
-    if(!tracker)
-        return false;
     vector<uint8_t> trackerData = vector<uint8_t>();
     trackerData.reserve(12);
     copy(trackerData.begin(), trackerData.begin() + 6, tracker.getID());
-    trackerData.push_back(tracker.get)
+    trackerData.push_back(tracker.getAddressType());
+    uint8_t * serviceUUID = tracker.getServiceUUID();
+    trackerData.insert(trackerData.begin()+8, serviceUUID[0], serviceUUID[1]);
+    Message estLink = Message(11, 6, trackerData.data());
+    uint8_t * estLinkData = estLink.buildMessage();
+    write(estLinkData, 11);
+    exhaust();
+    //read();
+    return true;
 }
 
 int Dongle::write(uint8_t * data, int dataLen){
