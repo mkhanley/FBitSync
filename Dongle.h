@@ -222,15 +222,17 @@ vector<Tracker> Dongle::discover(){
 bool Dongle::linkTracker(Tracker tracker){
     vector<uint8_t> trackerData = vector<uint8_t>();
     trackerData.reserve(12);
-    copy(trackerData.begin(), trackerData.begin() + 6, tracker.getID());
+    uint8_t * trackerID = tracker.getID();
+    trackerData.insert(trackerData.begin(), &trackerID[0], &trackerID[6]);
     trackerData.push_back(tracker.getAddressType());
     uint8_t * serviceUUID = tracker.getServiceUUID();
-    trackerData.insert(trackerData.begin()+8, serviceUUID[0], serviceUUID[1]);
+    trackerData.insert(trackerData.begin()+7, &serviceUUID[0], &serviceUUID[2]);
     Message estLink = Message(11, 6, trackerData.data());
     uint8_t * estLinkData = estLink.buildMessage();
+    print(estLinkData);
     write(estLinkData, 11);
+    read();
     exhaust();
-    //read();
     return true;
 }
 
