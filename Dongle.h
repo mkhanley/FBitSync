@@ -220,6 +220,7 @@ vector<Tracker> Dongle::discover(){
 }
 
 bool Dongle::linkTracker(Tracker tracker){
+    //Establish Airlink
     vector<uint8_t> trackerData = vector<uint8_t>();
     trackerData.reserve(12);
     uint8_t * trackerID = tracker.getID();
@@ -232,7 +233,14 @@ bool Dongle::linkTracker(Tracker tracker){
     print(estLinkData);
     write(estLinkData, 11);
     read();
-    exhaust();
+    read();
+    read();
+    read();
+    //Enable TX Pipe
+    uint8_t enableTX[] = {0x01};
+    Message tx = Message(3, 8, enableTX);
+    uint8_t * txData = tx.buildMessage();
+    write(txData, 3);
     return true;
 }
 
@@ -251,7 +259,7 @@ bool Dongle::isStatus(){
 }
 
 int Dongle::read(){
-    int res = libusb_bulk_transfer(handle,readEndpoint, readData, 32, &readDataLen, 2000);
+    int res = libusb_bulk_transfer(handle,readEndpoint, readData, 32, &readDataLen, 5000);
     if(res == 0 && readDataLen > 0){
         cout<<"Read Successful!"<<endl;
         if(isStatus())
