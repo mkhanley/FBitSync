@@ -16,8 +16,8 @@ int main() {
     }
     cout << trackers.size() << endl;
     /*uint8_t wdata[] = {0x02, 0x02};
-    f.write(wdata, 2);
-    f.read();*/
+    f.controlWrite(wdata, 2);
+    f.controlRead();*/
     /*libusb_init(NULL);
 
     // discover devices

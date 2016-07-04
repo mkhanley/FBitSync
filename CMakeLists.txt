@@ -8,6 +8,6 @@ include_directories (${PROJECT_SOURCE_DIR}/../include   ${LIBUSB_1_INCLUDE_DIRS}
 FIND_PACKAGE( Boost 1.40 COMPONENTS program_options REQUIRED )
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 
-set(SOURCE_FILES Main.cpp)
+set(SOURCE_FILES Main.cpp Dongle.h Tracker.h)
 add_executable(Fitbit ${SOURCE_FILES})
 target_link_libraries(Fitbit usb-1.0 ${Boost_Libraries})
