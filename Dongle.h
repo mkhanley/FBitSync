@@ -123,7 +123,9 @@ public:
 
     int dataRead();
 
-    void print(uint8_t * data);
+    void controlPrint(uint8_t *data, int direction);
+
+    void dataPrint(uint8_t *data, int direction);
 };
 
 Dongle::Dongle(){
@@ -241,7 +243,7 @@ bool Dongle::linkTracker(Tracker tracker){
     trackerData.insert(trackerData.begin()+7, &serviceUUID[0], &serviceUUID[2]);
     Message estLink = Message(11, 6, trackerData.data());
     uint8_t * estLinkData = estLink.buildMessage();
-    print(estLinkData);
+    controlPrint(estLinkData, 0);
     controlWrite(estLink);
     controlRead();
     controlRead();
@@ -259,6 +261,7 @@ int Dongle::controlWrite(Message message) {
     int dataWritten = 0;
     uint8_t * data = message.buildMessage();
     int dataLen = message.getLength();
+    controlPrint(data, 0);
     int res = libusb_bulk_transfer(handle,writeControlEndpoint, data, dataLen, &dataWritten, 2000);
     if(res == 0 && dataWritten == dataLen) //we wrote the bytes successfully
         cout<<"Writing Successful!"<<endl;
@@ -271,6 +274,7 @@ int Dongle::dataWrite(Message message){
     int dataWritten = 0;
     uint8_t * data = message.buildMessage();
     int dataLen = message.getLength();
+    dataPrint(data, 0);
     int res = libusb_bulk_transfer(handle,writeDataEndpoint, data, dataLen, &dataWritten, 2000);
     if(res == 0 && dataWritten == dataLen) //we wrote the bytes successfully
         cout<<"Writing Successful!"<<endl;
@@ -290,7 +294,7 @@ int Dongle::controlRead(){
         if(isStatus())
             cout << &readData[2] << endl;
         else
-            print(readData);
+            controlPrint(readData, 1);
         return readDataLen;
     }
     else {
@@ -305,7 +309,7 @@ int Dongle::dataRead(){
         if(isStatus())
             cout << &readData[2] << endl;
         else
-            print(readData);
+            dataPrint(readData, 1);
         return readDataLen;
     }
     else {
@@ -314,12 +318,30 @@ int Dongle::dataRead(){
     }
 }
 
-void Dongle::print(uint8_t * data){
-    cout << "Received " << (int)data[0] << " bytes" << endl;
+void Dongle::controlPrint(uint8_t *data, int direction) {
+    //0 for out, 1 for in
+    if(direction)
+        cout << "<-- ";
+    else
+        cout << "--> ";
+    cout << "( ";
     for (int i = 1; i < data[0]; ++i) {
         cout << hex << (int)data[i] << " " ;
     }
-    cout << dec << endl;
+    cout << ") - " << dec << (int)data[0] << endl;
+}
+
+void Dongle::dataPrint(uint8_t *data, int direction) {
+    //0 for out, 1 for in
+    if(direction)
+        cout << "<== ";
+    else
+        cout << "==> ";
+    cout << "[ ";
+    for (int i = 0; i < data[31]; ++i) {
+        cout << hex << (int)data[i] << " " ;
+    }
+    cout << "] - " << dec << (int)data[31] << endl;
 }
 
 //Private
