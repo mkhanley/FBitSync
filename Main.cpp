@@ -13,6 +13,7 @@ int main() {
     for(vector<Tracker>::iterator i = trackers.begin(); i != trackers.end(); i++){
         Tracker t = *i;
         fbDongle.linkTracker(t);
+        fbDongle.unlinkTracker(t);
     }
     cout << trackers.size() << endl;
     /*uint8_t wdata[] = {0x02, 0x02};

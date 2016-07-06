@@ -126,6 +126,8 @@ public:
     void controlPrint(uint8_t *data, int direction);
 
     void dataPrint(uint8_t *data, int direction);
+
+    bool unlinkTracker(Tracker tracker);
 };
 
 Dongle::Dongle(){
@@ -234,6 +236,8 @@ vector<Tracker> Dongle::discover(){
 
 bool Dongle::linkTracker(Tracker tracker){
     //Establish Airlink
+    cout << "Linking tracker ";
+    tracker.printID();
     vector<uint8_t> trackerData = vector<uint8_t>();
     trackerData.reserve(12);
     uint8_t * trackerID = tracker.getID();
@@ -281,6 +285,19 @@ int Dongle::dataWrite(Message message){
     else
         cout<<"Write Error"<<endl;
     return res;
+}
+
+bool Dongle::unlinkTracker(Tracker tracker){
+    cout << "Disconnecting from tracker" << endl;
+    uint8_t disableTX[] = {0x00};
+    Message tx = Message(3, 8, disableTX);
+    controlWrite(tx);
+    dataRead();
+    Message unlink = Message(2, 7, NULL);
+    controlWrite(unlink);
+    controlRead();
+    exhaust();
+    return true;
 }
 
 bool Dongle::isStatus(){
