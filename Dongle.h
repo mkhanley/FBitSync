@@ -281,32 +281,6 @@ bool Dongle::linkTracker(Tracker tracker){
     return true;
 }
 
-int Dongle::controlWrite(Message message) {
-    int dataWritten = 0;
-    uint8_t * data = message.buildMessage();
-    int dataLen = message.getLength();
-    controlPrint(data, writeDir);
-    int res = libusb_bulk_transfer(handle,writeControlEndpoint, data, dataLen, &dataWritten, 2000);
-    if(res == 0 && dataWritten == dataLen) //we wrote the bytes successfully
-        cout<<"Writing Successful!"<<endl;
-    else
-        cout<<"Write Error"<<endl;
-    return res;
-}
-
-int Dongle::dataWrite(Message message){
-    int dataWritten = 0;
-    uint8_t * data = message.buildMessage();
-    int dataLen = message.getLength();
-    dataPrint(data, writeDir);
-    int res = libusb_bulk_transfer(handle,writeDataEndpoint, data, dataLen, &dataWritten, 2000);
-    if(res == 0 && dataWritten == dataLen) //we wrote the bytes successfully
-        cout<<"Writing Successful!"<<endl;
-    else
-        cout<<"Write Error"<<endl;
-    return res;
-}
-
 bool Dongle::unlinkTracker(Tracker tracker){
     cout << "Disconnecting from tracker" << endl;
     uint8_t disableTX[] = {0x00};
@@ -335,7 +309,7 @@ int Dongle::controlRead(){
         return readDataLen;
     }
     else {
-        cout << "Read Error" << endl;
+        cout << "Read Error " << libusb_error_name(res)  << endl;
         return -1;
     }
 }
@@ -351,9 +325,35 @@ int Dongle::dataRead(){
         return readDataLen;
     }
     else {
-        cout << "Read Error" << endl;
+        cout << "Read Error " << libusb_error_name(res) << endl;
         return -1;
     }
+}
+
+int Dongle::controlWrite(Message message) {
+    int dataWritten = 0;
+    uint8_t * data = message.buildMessage();
+    int dataLen = message.getLength();
+    controlPrint(data, writeDir);
+    int res = libusb_bulk_transfer(handle,writeControlEndpoint, data, dataLen, &dataWritten, 2000);
+    if(res == 0 && dataWritten == dataLen) //we wrote the bytes successfully
+        cout<<"Writing Successful!"<<endl;
+    else
+        cout<<"Write Error " << libusb_error_name(res) <<endl;
+    return res;
+}
+
+int Dongle::dataWrite(Message message){
+    int dataWritten = 0;
+    uint8_t * data = message.buildMessage();
+    int dataLen = message.getLength();
+    dataPrint(data, writeDir);
+    int res = libusb_bulk_transfer(handle,writeDataEndpoint, data, dataLen, &dataWritten, 2000);
+    if(res == 0 && dataWritten == dataLen) //we wrote the bytes successfully
+        cout<<"Writing Successful!"<<endl;
+    else
+        cout<<"Write Error " << libusb_error_name(res) <<endl;
+    return res;
 }
 
 void Dongle::controlPrint(uint8_t *data, int direction) {
