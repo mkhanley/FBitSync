@@ -189,7 +189,7 @@ Dongle::~Dongle(){
 }
 
 bool Dongle::disconnect(){
-    cout << "Attempting to disconnect" << endl;
+    cout << "Disconnecting from connected trackers" << endl;
     Message disconnectM = Message(2,2,NULL);
     controlWrite(disconnectM);
     string expected[] = {"CancelDiscovery", "TerminateLink"};
@@ -221,19 +221,16 @@ vector<Tracker> Dongle::discover(){
     for (int i = 15; i > -1 ; i--) {
         payload.push_back(uuid.data[i]);
     }
-    payload.push_back(0x00);
-    payload.push_back(0xfb);
-    payload.push_back(0x01);
-    payload.push_back(0xfb);
-    payload.push_back(0x02);
-    payload.push_back(0xfb);
-    payload.push_back(0xa0);
-    payload.push_back(0x0f);
+    payload.insert(payload.end(), {0x00, 0xfb,
+                                   0x01, 0xfb,
+                                   0x02, 0xfb,
+                                   0xa0, 0x0f});
     Message message = Message(26, 4, payload.data());
     cout << "Starting Discovery" << endl;
     controlWrite(message);
-    /*if(!compareStatus("StartDiscovery"))
-        expectedStatusError("StartDiscovery");*/
+    controlRead();
+    if(!compareStatus("StartDiscovery"))
+        expectedStatusError("StartDiscovery");
     vector<Tracker> trackers = vector<Tracker>();
     int numOfTrackers = 0;
     bool endOfDiscovery = false;
