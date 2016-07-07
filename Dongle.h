@@ -111,6 +111,8 @@ private:
 
     void writeError(Message message, int writeRes);
 
+    bool compareStatus(string expected);
+
 public:
 
     Dongle();
@@ -189,7 +191,7 @@ bool Dongle::disconnect(){
     string expected[] = {"CancelDiscovery", "TerminateLink"};
     for (int i = 0; i < 2; i++) {
         controlRead();
-        if(strcmp((char*)&readData[2],expected[i].c_str()) != 0)
+        if(!compareStatus(expected[i]))
             return false;
     }
     return true;
@@ -458,6 +460,13 @@ void Dongle::writeError(Message message, int writeRes) {
     cout << "Error writing " << message.asString() << endl;
     cout << "Libusb error " << libusb_error_name(writeRes);
     exit(-1);
+}
+
+bool Dongle::compareStatus(string expected) {
+    if(strcmp((char*)&readData[2], expected.c_str()) == 0)
+        return true;
+    else
+        return false;
 }
 
 
