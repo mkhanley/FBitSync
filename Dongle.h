@@ -93,8 +93,6 @@ private:
 
     int claimInterface(int interface);
 
-    void reverseArray(uint8_t * array, int size);
-
     bool trackerPresent(vector<Tracker>, uint8_t*);
 
 public:
@@ -402,18 +400,6 @@ int Dongle::claimInterface(int interface){
     else
         cout << "Interface " << interface <<" claimed"  <<endl;
     return res;
-}
-
-void Dongle::reverseArray(uint8_t * array, int size){
-    if(size > 1){
-        int end = size - 1;
-        for (int i = 0; i < size/2; i++) {
-            uint8_t a = array[i];
-            uint8_t temp = array[end - i];
-            array[size - i] = a;
-            array[i] = temp;
-        }
-    }
 }
 
 bool Dongle::trackerPresent(vector<Tracker> trackers, uint8_t* ID){
