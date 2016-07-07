@@ -113,6 +113,8 @@ private:
 
     bool compareStatus(string expected);
 
+    bool expectedMessage(uint8_t length, uint8_t instruction);
+
 public:
 
     Dongle();
@@ -129,9 +131,9 @@ public:
 
     bool linkTracker(Tracker);
 
-    int controlWrite(Message message);
+    void controlWrite(Message message);
 
-    int dataWrite(Message message);
+    void dataWrite(Message message);
 
     bool isStatus();
 
@@ -184,10 +186,7 @@ Dongle::~Dongle(){
 bool Dongle::disconnect(){
     cout << "Attempting to disconnect" << endl;
     Message disconnectM = Message(2,2,NULL);
-    int writeRes = controlWrite(disconnectM);
-    if(writeRes != 0){
-        writeError(disconnectM, writeRes);
-    }
+    controlWrite(disconnectM);
     string expected[] = {"CancelDiscovery", "TerminateLink"};
     for (int i = 0; i < 2; i++) {
         controlRead();
@@ -208,7 +207,7 @@ bool Dongle::getDongleInfo(){
     Message message = Message(2,1,NULL);
     controlWrite(message);
     controlRead();
-    return true;
+    return expectedMessage(22, 8);
 }
 
 vector<Tracker> Dongle::discover(){
@@ -336,7 +335,7 @@ int Dongle::dataRead(){
     }
 }
 
-int Dongle::controlWrite(Message message) {
+void Dongle::controlWrite(Message message) {
     int dataWritten = 0;
     uint8_t * data = message.buildMessage();
     int dataLen = message.getLength();
@@ -345,11 +344,10 @@ int Dongle::controlWrite(Message message) {
     if(res == 0 && dataWritten == dataLen) //we wrote the bytes successfully
         cout<<"Writing Successful!"<<endl;
     else
-        cout<<"Write Error " << libusb_error_name(res) <<endl;
-    return res;
+        writeError(message, res);
 }
 
-int Dongle::dataWrite(Message message){
+void Dongle::dataWrite(Message message){
     int dataWritten = 0;
     uint8_t * data = message.buildMessage();
     int dataLen = message.getLength();
@@ -358,8 +356,7 @@ int Dongle::dataWrite(Message message){
     if(res == 0 && dataWritten == dataLen) //we wrote the bytes successfully
         cout<<"Writing Successful!"<<endl;
     else
-        cout<<"Write Error " << libusb_error_name(res) <<endl;
-    return res;
+        writeError(message, res);
 }
 
 void Dongle::controlPrint(uint8_t *data, int direction) {
@@ -467,6 +464,18 @@ bool Dongle::compareStatus(string expected) {
         return true;
     else
         return false;
+}
+
+bool Dongle::expectedMessage(uint8_t length, uint8_t instruction) {
+    if(readData[0] != length) {
+        cout << "Received length of " << readData[0] << ". Expected " << length << endl;
+        return false;
+    }
+    if(readData[1] != instruction) {
+        cout << "Received instruction " << readData[1] << ". Expected " << instruction << endl;
+        return false;
+    }
+    return true;
 }
 
 
