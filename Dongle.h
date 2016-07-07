@@ -31,6 +31,8 @@ public:
 
     uint8_t getLength();
     int getInstruction();
+
+    string asString();
 };
 
 Message::Message(uint8_t length, int instruction, uint8_t * payload){
@@ -70,6 +72,11 @@ int Message::getInstruction(){
     return instruction;
 }
 
+string Message::asString() {
+    string message;
+    return 0;
+}
+
 class Dongle{
 
 private:
@@ -87,13 +94,17 @@ private:
 
     bool initUSB();
 
-    int releaseInterface(int interface);
+    bool releaseInterface(int interface);
 
     bool detachKernel(int interface);
 
     int claimInterface(int interface);
 
     bool trackerPresent(vector<Tracker>, uint8_t*);
+
+    void initDongleError();
+
+    void writeError(Message message, int writeRes);
 
 public:
 
@@ -133,9 +144,14 @@ Dongle::Dongle(){
     if(initUSB()){
         int detached = 0;
         for (int i = 0; i < 2; i++) {
-            if(detachKernel(i))
-            if(claimInterface(i) == 0)
-                detached++;
+            if(detachKernel(i)) {
+                if (claimInterface(i) == 0)
+                    detached++;
+                else
+                    initDongleError();
+            }
+            else
+                initDongleError();
         }
         if(detached == 2){
             readData = (uint8_t *)calloc(32, 1);
@@ -143,13 +159,11 @@ Dongle::Dongle(){
             string uuidStr = "adab0000-6e7d-4601-bda2-bffaa68956ba";
             uuid = boost::lexical_cast<boost::uuids::uuid>(uuidStr);
         }
-        else{
-            cout << "Error Initialising dongle" << endl;
-        }
+        else
+            initDongleError();
     }
-    else{
-        exit(-1);
-    }
+    else
+        initDongleError();
 }
 
 Dongle::~Dongle(){
@@ -163,7 +177,10 @@ Dongle::~Dongle(){
 bool Dongle::disconnect(){
     cout << "Attempting to disconnect" << endl;
     Message disconnectM = Message(2,2,NULL);
-    controlWrite(disconnectM);
+    int writeRes = controlWrite(disconnectM);
+    if(writeRes != 0){
+        writeError(disconnectM, writeRes);
+    }
     controlRead();
     exhaust();
     return true;
@@ -374,9 +391,14 @@ bool Dongle::initUSB(){
     }
 }
 
-int Dongle::releaseInterface(int interface){
+bool Dongle::releaseInterface(int interface){
     int res = libusb_release_interface(handle, interface);
-    return res;
+    if(res != 0){
+        cout << "Cannot release interface " << interface << endl;
+        cout << "Libusb error " << libusb_error_name(res) << endl;
+        return false;
+    }
+    return true;
 }
 
 bool Dongle::detachKernel(int interface){
@@ -387,6 +409,9 @@ bool Dongle::detachKernel(int interface){
             cout << "Kernel Driver Detached!" << endl;
             detached = true;
         }
+        else{
+            cout << "Unable to detach kernel driver. Are you running as root?" << endl;
+        }
     }
     else
         detached = true;
@@ -395,8 +420,10 @@ bool Dongle::detachKernel(int interface){
 
 int Dongle::claimInterface(int interface){
     int res = libusb_claim_interface(handle, interface);
-    if(res < 0)
-        cout << "Cannot Claim Interface" << interface << endl;
+    if(res < 0) {
+        cout << "Cannot Claim Interface " << interface << endl;
+        cout << "USB Error " << libusb_error_name(res) << endl;
+    }
     else
         cout << "Interface " << interface <<" claimed"  <<endl;
     return res;
@@ -410,4 +437,18 @@ bool Dongle::trackerPresent(vector<Tracker> trackers, uint8_t* ID){
     }
     return false;
 }
+
+void Dongle::initDongleError() {
+    cout << "Dongle was not able to be initialised...\n"
+                    "Exiting..." << endl;
+    exit(-1);
+}
+
+void Dongle::writeError(Message message, int writeRes) {
+    cout << "Error writing " << message.asString() << endl;
+    cout << "Libusb error " << libusb_error_name(writeRes);
+    exit(-1);
+}
+
+
 #endif //FITBIT_DONGLE_H
