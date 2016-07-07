@@ -115,6 +115,8 @@ private:
 
     bool expectedMessage(uint8_t length, uint8_t instruction);
 
+    void expectedStatusError(string expected);
+
 public:
 
     Dongle();
@@ -170,6 +172,9 @@ Dongle::Dongle(){
         }
         else
             initDongleError();
+        cout << "Emptying dongle buffer" << endl;
+        exhaust(); //Empty buffer in dongle
+        cout << "Buffer empty \n" << endl;
     }
     else
         initDongleError();
@@ -227,14 +232,19 @@ vector<Tracker> Dongle::discover(){
     Message message = Message(26, 4, payload.data());
     cout << "Starting Discovery" << endl;
     controlWrite(message);
+    /*if(!compareStatus("StartDiscovery"))
+        expectedStatusError("StartDiscovery");*/
     vector<Tracker> trackers = vector<Tracker>();
     int numOfTrackers = 0;
-    while(readData[1] != 0x02){
+    bool endOfDiscovery = false;
+    while(!endOfDiscovery){
         if(controlRead()){
             if(isStatus()){
 
             }
-            else if(readData[1] == 0x03) {
+            else if(readData[0] == 3 && readData[1] == 2)
+                endOfDiscovery = true;
+            else if(expectedMessage(19, 3)) {
                 Tracker discoveredTracker = Tracker(readData);
                 if(!trackerPresent(trackers, &readData[2])) {
                     trackers.push_back(discoveredTracker);
@@ -256,6 +266,8 @@ vector<Tracker> Dongle::discover(){
     Message cancel = Message(2, 5, NULL);
     controlWrite(cancel);
     controlRead();
+    if(!compareStatus("CancelDiscovery"))
+        expectedStatusError("CancelDiscovery");
     return trackers;
 }
 
@@ -468,14 +480,19 @@ bool Dongle::compareStatus(string expected) {
 
 bool Dongle::expectedMessage(uint8_t length, uint8_t instruction) {
     if(readData[0] != length) {
-        cout << "Received length of " << readData[0] << ". Expected " << length << endl;
+        cout << "Received length of " << (int)readData[0] << ". Expected " << (int)length << endl;
         return false;
     }
     if(readData[1] != instruction) {
-        cout << "Received instruction " << readData[1] << ". Expected " << instruction << endl;
+        cout << "Received instruction " << (int)readData[1] << ". Expected " << (int)instruction << endl;
         return false;
     }
     return true;
+}
+
+void Dongle::expectedStatusError(string expected) {
+    cout << "Received message " << (&readData[2]) << ". Expected " << expected << endl;
+    exit(-1);
 }
 
 
