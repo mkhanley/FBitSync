@@ -12,6 +12,11 @@
 
 using namespace std;
 
+enum{
+    writeDir,
+    readDir
+};
+
 class Message{
 private:
     uint8_t length;
@@ -262,7 +267,7 @@ bool Dongle::linkTracker(Tracker tracker){
     trackerData.insert(trackerData.begin()+7, &serviceUUID[0], &serviceUUID[2]);
     Message estLink = Message(11, 6, trackerData.data());
     uint8_t * estLinkData = estLink.buildMessage();
-    controlPrint(estLinkData, 0);
+    controlPrint(estLinkData, writeDir);
     controlWrite(estLink);
     controlRead();
     controlRead();
@@ -280,7 +285,7 @@ int Dongle::controlWrite(Message message) {
     int dataWritten = 0;
     uint8_t * data = message.buildMessage();
     int dataLen = message.getLength();
-    controlPrint(data, 0);
+    controlPrint(data, writeDir);
     int res = libusb_bulk_transfer(handle,writeControlEndpoint, data, dataLen, &dataWritten, 2000);
     if(res == 0 && dataWritten == dataLen) //we wrote the bytes successfully
         cout<<"Writing Successful!"<<endl;
@@ -293,7 +298,7 @@ int Dongle::dataWrite(Message message){
     int dataWritten = 0;
     uint8_t * data = message.buildMessage();
     int dataLen = message.getLength();
-    dataPrint(data, 0);
+    dataPrint(data, writeDir);
     int res = libusb_bulk_transfer(handle,writeDataEndpoint, data, dataLen, &dataWritten, 2000);
     if(res == 0 && dataWritten == dataLen) //we wrote the bytes successfully
         cout<<"Writing Successful!"<<endl;
@@ -326,7 +331,7 @@ int Dongle::controlRead(){
         if(isStatus())
             cout << &readData[2] << endl;
         else
-            controlPrint(readData, 1);
+            controlPrint(readData, readDir);
         return readDataLen;
     }
     else {
@@ -334,6 +339,7 @@ int Dongle::controlRead(){
         return -1;
     }
 }
+
 int Dongle::dataRead(){
     int res = libusb_bulk_transfer(handle,readDataEndpoint, readData, 32, &readDataLen, 2000);
     if(res == 0 && readDataLen > 0){
@@ -341,7 +347,7 @@ int Dongle::dataRead(){
         if(isStatus())
             cout << &readData[2] << endl;
         else
-            dataPrint(readData, 1);
+            dataPrint(readData, readDir);
         return readDataLen;
     }
     else {
