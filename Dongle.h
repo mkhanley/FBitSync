@@ -186,8 +186,12 @@ bool Dongle::disconnect(){
     if(writeRes != 0){
         writeError(disconnectM, writeRes);
     }
-    controlRead();
-    exhaust();
+    string expected[] = {"CancelDiscovery", "TerminateLink"};
+    for (int i = 0; i < 2; i++) {
+        controlRead();
+        if(strcmp((char*)&readData[2],expected[i].c_str()) != 0)
+            return false;
+    }
     return true;
 }
 
