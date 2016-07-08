@@ -113,7 +113,9 @@ private:
 
     bool compareStatus(string expected);
 
-    bool expectedMessage(uint8_t length, uint8_t instruction);
+    bool expectedControlMessage(uint8_t length, uint8_t instruction);
+
+    bool expectedDataMessage(uint8_t length, uint8_t* instruction);
 
     void expectedStatusError(string expected);
 
@@ -212,7 +214,7 @@ bool Dongle::getDongleInfo(){
     Message message = Message(2,1,NULL);
     controlWrite(message);
     controlRead();
-    return expectedMessage(22, 8);
+    return expectedControlMessage(22, 8);
 }
 
 vector<Tracker> Dongle::discover(){
@@ -241,7 +243,7 @@ vector<Tracker> Dongle::discover(){
             }
             else if(readData[0] == 3 && readData[1] == 2)
                 endOfDiscovery = true;
-            else if(expectedMessage(19, 3)) {
+            else if(expectedControlMessage(19, 3)) {
                 Tracker discoveredTracker = Tracker(readData);
                 if(!trackerPresent(trackers, &readData[2])) {
                     trackers.push_back(discoveredTracker);
@@ -280,19 +282,32 @@ bool Dongle::linkTracker(Tracker tracker){
     uint8_t * serviceUUID = tracker.getServiceUUID();
     trackerData.insert(trackerData.begin()+7, &serviceUUID[0], &serviceUUID[2]);
     Message estLink = Message(11, 6, trackerData.data());
-    uint8_t * estLinkData = estLink.buildMessage();
-    controlPrint(estLinkData, writeDir);
+    cout << "Establishing Arilink with tracker" << endl;
     controlWrite(estLink);
-    controlRead();
-    controlRead();
-    controlRead();
-    controlRead();
+    string expectedStatus[] = {"EstablishLink called...", "GAP_LINK_ESTABLISHED_EVENT"};
+    uint8_t expectedPayload [][2] = {{3,4},{2,7}};
+    for (int i = 0; i < 4; i++) {
+        controlRead();
+        if(i % 2 == 0){
+            if(!compareStatus(expectedStatus[i / 2])){
+
+            }
+        }
+        else{
+            uint8_t *payload = expectedPayload[i / 2];
+            if(!expectedControlMessage(payload[0], payload[1])){
+
+            }
+        }
+    }
     //Enable TX Pipe
     uint8_t enableTX[] = {0x01};
     Message tx = Message(3, 8, enableTX);
+    cout << "Enabling TX pipe with tracker" << endl;
     controlWrite(tx);
     dataRead();
-    return true;
+    uint8_t expected[] = {0xc0, 0x0b};
+    return expectedDataMessage(2, expected);
 }
 
 bool Dongle::unlinkTracker(Tracker tracker){
@@ -475,7 +490,7 @@ bool Dongle::compareStatus(string expected) {
         return false;
 }
 
-bool Dongle::expectedMessage(uint8_t length, uint8_t instruction) {
+bool Dongle::expectedControlMessage(uint8_t length, uint8_t instruction) {
     if(readData[0] != length) {
         cout << "Received length of " << (int)readData[0] << ". Expected " << (int)length << endl;
         return false;
@@ -490,6 +505,19 @@ bool Dongle::expectedMessage(uint8_t length, uint8_t instruction) {
 void Dongle::expectedStatusError(string expected) {
     cout << "Received message " << (&readData[2]) << ". Expected " << expected << endl;
     exit(-1);
+}
+
+bool Dongle::expectedDataMessage(uint8_t length, uint8_t* instruction) {
+    if(readData[31] != length) {
+        cout << "Received length of " << (int)readData[31] << ". Expected " << (int)length << endl;
+        return false;
+    }
+    if(memcmp(readData, instruction, 2) != 0){
+        cout << "Received instruction of " << (int)readData[1] << " " << (int)readData[2]
+            << ". Expected " << (int)instruction[0] << " " << (int)instruction[1] << endl;
+        return false;
+    }
+    return true;
 }
 
 
