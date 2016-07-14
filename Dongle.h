@@ -78,8 +78,22 @@ int Message::getInstruction(){
 }
 
 string Message::asString() {
-    string message;
-    return 0;
+    //TODO
+    stringstream ss;
+    ss << hex;
+    if(instruction > 0xFF){
+        ss << (int)(*insArr) << " ";
+        ss << (int)(*(insArr + 1)) << " ";
+    }
+    else
+        ss << (int)(*insArr) << " ";
+    ss << "( ";
+    for (int i = 0; i < length - 2; i++) {
+        ss << (int)*(payload + i) << " ";
+    }
+    ss << ") ";
+    ss << dec << (int)length;
+    return ss.str();
 }
 
 class Dongle{
