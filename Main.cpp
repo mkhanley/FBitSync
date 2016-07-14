@@ -14,6 +14,6 @@ int main() {
         fbDongle.linkTracker(t);
         fbDongle.unlinkTracker(t);
     }
-    cout << "Finished syncing trackers" << endl;
+    cout << "Finished syncing "<< trackers.size() << " trackers" << endl;
     return 0;
 }

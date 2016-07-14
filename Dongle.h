@@ -282,7 +282,7 @@ bool Dongle::linkTracker(Tracker tracker){
     uint8_t * serviceUUID = tracker.getServiceUUID();
     trackerData.insert(trackerData.begin()+7, &serviceUUID[0], &serviceUUID[2]);
     Message estLink = Message(11, 6, trackerData.data());
-    cout << "Establishing Arilink with tracker" << endl;
+    cout << "Establishing Airlink with tracker" << endl;
     controlWrite(estLink);
     string expectedStatus[] = {"EstablishLink called...", "GAP_LINK_ESTABLISHED_EVENT"};
     uint8_t expectedPayload [][2] = {{3,4},{2,7}};
@@ -316,9 +316,21 @@ bool Dongle::unlinkTracker(Tracker tracker){
     Message tx = Message(3, 8, disableTX);
     controlWrite(tx);
     dataRead();
+    uint8_t expected[] = {0xc0, 0x0b};
+    if(!expectedDataMessage(2, expected))
+        return false;
     Message unlink = Message(2, 7, NULL);
     controlWrite(unlink);
-    controlRead();
+    string expectedStrings[] = {"TerminateLink", "", "GAP_LINK_TERMINATED_EVENT"}; //[1] = NULL to make loop logic easier
+    for (int i = 0; i < 3; i++) {
+        controlRead();
+        if(i == 1){
+            if(!expectedControlMessage(3, 5))
+                return false;
+        }
+        else if(!compareStatus(expectedStrings[i]))
+            return false;
+    }
     exhaust();
     return true;
 }
@@ -386,9 +398,9 @@ void Dongle::dataWrite(Message message){
 void Dongle::controlPrint(uint8_t *data, int direction) {
     //0 for out, 1 for in
     if(direction)
-        cout << "<-- ";
+        cout << "R <-- ";
     else
-        cout << "--> ";
+        cout << "W --> ";
     cout << "( ";
     for (int i = 1; i < data[0]; ++i) {
         cout << hex << (int)data[i] << " " ;
@@ -399,9 +411,9 @@ void Dongle::controlPrint(uint8_t *data, int direction) {
 void Dongle::dataPrint(uint8_t *data, int direction) {
     //0 for out, 1 for in
     if(direction)
-        cout << "<== ";
+        cout << "R <== ";
     else
-        cout << "==> ";
+        cout << "W ==> ";
     cout << "[ ";
     for (int i = 0; i < data[31]; ++i) {
         cout << hex << (int)data[i] << " " ;
