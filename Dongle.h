@@ -58,8 +58,7 @@ void Message::insToArr(){
 }
 
 uint8_t* Message::buildMessage() {
-
-    if(instruction > 0xFF){
+    if(instruction > 0xFF){ // Message to tracker
         messageData.push_back(insArr[1]);
         messageData.push_back(insArr[0]);
         messageData.insert(messageData.end(), &payload[0], &payload[length - 2]);
@@ -67,7 +66,7 @@ uint8_t* Message::buildMessage() {
             messageData.push_back(0);
         messageData.push_back(length);
     }
-    else {
+    else { //Message for dongle
         messageData.push_back(length);
         messageData.push_back(insArr[0]);
         messageData.insert(messageData.end(), &payload[0], &payload[length - 2]);
@@ -84,7 +83,6 @@ int Message::getInstruction(){
 }
 
 string Message::asString() {
-    //TODO
     stringstream stream;
     stream << hex;
     if(instruction > 0xFF){
