@@ -79,21 +79,21 @@ int Message::getInstruction(){
 
 string Message::asString() {
     //TODO
-    stringstream ss;
-    ss << hex;
+    stringstream stream;
+    stream << hex;
     if(instruction > 0xFF){
-        ss << (int)(*insArr) << " ";
-        ss << (int)(*(insArr + 1)) << " ";
+        stream << (int)(*insArr) << " ";
+        stream << (int)(*(insArr + 1)) << " ";
     }
     else
-        ss << (int)(*insArr) << " ";
-    ss << "( ";
+        stream << (int)(*insArr) << " ";
+    stream << "( ";
     for (int i = 0; i < length - 2; i++) {
-        ss << (int)*(payload + i) << " ";
+        stream << (int)*(payload + i) << " ";
     }
-    ss << ") ";
-    ss << dec << (int)length;
-    return ss.str();
+    stream << ") ";
+    stream << dec << (int)length;
+    return stream.str();
 }
 
 class Dongle{
@@ -122,6 +122,8 @@ private:
     bool trackerPresent(vector<Tracker>, uint8_t*);
 
     void initDongleError();
+
+    bool setLinkParams();
 
     void writeError(Message message, int writeRes);
 
@@ -321,7 +323,10 @@ bool Dongle::linkTracker(Tracker tracker){
     controlWrite(tx);
     dataRead();
     uint8_t expected[] = {0xc0, 0x0b};
-    return expectedDataMessage(2, expected);
+    if(!expectedDataMessage(2, expected))
+        return false;
+    setLinkParams();
+    return true;
 }
 
 bool Dongle::unlinkTracker(Tracker tracker){
@@ -397,7 +402,7 @@ void Dongle::controlWrite(Message message) {
         writeError(message, res);
 }
 
-void Dongle::dataWrite(Message message){
+void Dongle::dataWrite(Message message){ //TODO fix build message for data
     int dataWritten = 0;
     uint8_t * data = message.buildMessage();
     int dataLen = message.getLength();
@@ -544,6 +549,18 @@ bool Dongle::expectedDataMessage(uint8_t length, uint8_t* instruction) {
         return false;
     }
     return true;
+}
+
+bool Dongle::setLinkParams() {
+    vector<uint8_t> params = vector<uint8_t>(10);
+    unsigned short initParams[5] = {0x0a, 0x06, 0x06, 0x00, 0xc8};
+    for (int i = 0; i < 5; i++) { //Vector stores values contiguously so copy values and they are reversed
+        memcpy(params.data() + (i * 2), &initParams[i], sizeof(short));
+    }
+    Message paramsMessage = Message(12, 0xC00A, params.data());
+    dataWrite(paramsMessage);
+    exhaust();
+    return false;
 }
 
 
