@@ -563,8 +563,14 @@ bool Dongle::setLinkParams() {
     }
     Message paramsMessage = Message(12, 0xC00A, params.data());
     dataWrite(paramsMessage);
-    exhaust();
-    return false;
+    controlRead();
+    if(!expectedControlMessage(8, 6))
+        return false;
+    dataRead();
+    uint8_t insExpected[] = {0xc0, 0x14};
+    if(!expectedDataMessage(14, insExpected))
+        return false;
+    return true;
 }
 
 
