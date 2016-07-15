@@ -58,14 +58,20 @@ void Message::insToArr(){
 }
 
 uint8_t* Message::buildMessage() {
-    messageData.push_back(length);
+
     if(instruction > 0xFF){
         messageData.push_back(insArr[1]);
         messageData.push_back(insArr[0]);
+        messageData.insert(messageData.end(), &payload[0], &payload[length - 2]);
+        while(messageData.size() < 31)
+            messageData.push_back(0);
+        messageData.push_back(length);
     }
-    else
+    else {
+        messageData.push_back(length);
         messageData.push_back(insArr[0]);
-    messageData.insert(messageData.end(), &payload[0], &payload[length - 2]);
+        messageData.insert(messageData.end(), &payload[0], &payload[length - 2]);
+    }
     return messageData.data();
 }
 
@@ -402,10 +408,10 @@ void Dongle::controlWrite(Message message) {
         writeError(message, res);
 }
 
-void Dongle::dataWrite(Message message){ //TODO fix build message for data
+void Dongle::dataWrite(Message message){
     int dataWritten = 0;
     uint8_t * data = message.buildMessage();
-    int dataLen = message.getLength();
+    int dataLen = 32; //Always write 32 bytes to tracker
     dataPrint(data, writeDir);
     int res = libusb_bulk_transfer(handle,writeDataEndpoint, data, dataLen, &dataWritten, 2000);
     if(res == 0 && dataWritten == dataLen) //we wrote the bytes successfully
