@@ -129,6 +129,8 @@ private:
 
     bool setLinkParams();
 
+    bool toggleTXPipe(uint8_t value);
+
     void writeError(Message message, int writeRes);
 
     bool compareStatus(string expected);
@@ -153,7 +155,7 @@ public:
 
     vector<Tracker> discover();
 
-    bool linkTracker(Tracker);
+    bool linkTracker(Tracker &tracker);
 
     void controlWrite(Message message);
 
@@ -290,7 +292,7 @@ vector<Tracker> Dongle::discover(){
     return trackers;
 }
 
-bool Dongle::linkTracker(Tracker tracker){
+bool Dongle::linkTracker(Tracker &tracker){
     //Establish Airlink
     cout << "Linking tracker ";
     tracker.printID();
@@ -321,26 +323,15 @@ bool Dongle::linkTracker(Tracker tracker){
         }
     }
     //Enable TX Pipe
-    uint8_t enableTX[] = {0x01};
-    Message tx = Message(3, 8, enableTX);
     cout << "Enabling TX pipe with tracker" << endl;
-    controlWrite(tx);
-    dataRead();
-    uint8_t expected[] = {0xc0, 0x0b};
-    if(!expectedDataMessage(2, expected))
+    if(!toggleTXPipe(0x01))
         return false;
-    setLinkParams();
-    return true;
+    return setLinkParams();
 }
 
 bool Dongle::unlinkTracker(Tracker tracker){
     cout << "Disconnecting from tracker" << endl;
-    uint8_t disableTX[] = {0x00};
-    Message tx = Message(3, 8, disableTX);
-    controlWrite(tx);
-    dataRead();
-    uint8_t expected[] = {0xc0, 0x0b};
-    if(!expectedDataMessage(2, expected))
+    if(!toggleTXPipe(0x00))
         return false;
     Message unlink = Message(2, 7, NULL);
     controlWrite(unlink);
@@ -571,6 +562,15 @@ bool Dongle::setLinkParams() {
     if(!expectedDataMessage(14, insExpected))
         return false;
     return true;
+}
+
+bool Dongle::toggleTXPipe(uint8_t value) {
+    uint8_t txValue[] = {value};
+    Message tx = Message(3, 8, txValue);
+    controlWrite(tx);
+    dataRead();
+    uint8_t expected[] = {0xc0, 0x0b};
+    return expectedDataMessage(2, expected);
 }
 
 
