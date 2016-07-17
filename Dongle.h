@@ -47,10 +47,10 @@ Message::Message(uint8_t length, int instruction, uint8_t * payload){
         this->payload = new uint8_t[length];
         copy(&payload[0], &payload[length], this->payload);
     }
-    //this->payload = payload;//TODO Change to copy
+    else
+        this->payload = NULL;
     this->messageData = vector<uint8_t>();
     insToArr();
-    //buildMessage();
 }
 
 Message::~Message(){
