@@ -43,7 +43,11 @@ public:
 Message::Message(uint8_t length, int instruction, uint8_t * payload){
     this->length = length;
     this->instruction = instruction;
-    this->payload = payload;
+    if(payload != nullptr) {
+        this->payload = new uint8_t[length];
+        copy(&payload[0], &payload[length], this->payload);
+    }
+    //this->payload = payload;//TODO Change to copy
     this->messageData = vector<uint8_t>();
     insToArr();
     //buildMessage();
@@ -127,6 +131,8 @@ private:
 
     void initDongleError();
 
+    Message buildTrackerLinkMessage(Tracker &tracker);
+
     bool setLinkParams();
 
     bool toggleTXPipe(uint8_t value);
@@ -171,7 +177,7 @@ public:
 
     void dataPrint(uint8_t *data, int direction);
 
-    bool unlinkTracker(Tracker tracker);
+    bool unlinkTracker();
 };
 
 Dongle::Dongle(){
@@ -296,14 +302,7 @@ bool Dongle::linkTracker(Tracker &tracker){
     //Establish Airlink
     cout << "Linking tracker ";
     tracker.printID();
-    vector<uint8_t> trackerData = vector<uint8_t>();
-    trackerData.reserve(12);
-    uint8_t * trackerID = tracker.getID();
-    trackerData.insert(trackerData.begin(), &trackerID[0], &trackerID[6]);
-    trackerData.push_back(tracker.getAddressType());
-    uint8_t * serviceUUID = tracker.getServiceUUID();
-    trackerData.insert(trackerData.begin()+7, &serviceUUID[0], &serviceUUID[2]);
-    Message estLink = Message(11, 6, trackerData.data());
+    Message estLink = buildTrackerLinkMessage(tracker);
     cout << "Establishing Airlink with tracker" << endl;
     controlWrite(estLink);
     string expectedStatus[] = {"EstablishLink called...", "GAP_LINK_ESTABLISHED_EVENT"};
@@ -329,7 +328,7 @@ bool Dongle::linkTracker(Tracker &tracker){
     return setLinkParams();
 }
 
-bool Dongle::unlinkTracker(Tracker tracker){
+bool Dongle::unlinkTracker(){
     cout << "Disconnecting from tracker" << endl;
     if(!toggleTXPipe(0x00))
         return false;
@@ -571,6 +570,18 @@ bool Dongle::toggleTXPipe(uint8_t value) {
     dataRead();
     uint8_t expected[] = {0xc0, 0x0b};
     return expectedDataMessage(2, expected);
+}
+
+Message Dongle::buildTrackerLinkMessage(Tracker &tracker) {
+    vector<uint8_t> trackerData = vector<uint8_t>();
+    trackerData.reserve(12);
+    uint8_t * trackerID = tracker.getID();
+    trackerData.insert(trackerData.begin(), &trackerID[0], &trackerID[6]);
+    trackerData.push_back(tracker.getAddressType());
+    uint8_t * serviceUUID = tracker.getServiceUUID();
+    trackerData.insert(trackerData.begin()+7, &serviceUUID[0], &serviceUUID[2]);
+    Message linkMessage = Message(11, 6, trackerData.data());
+    return linkMessage;
 }
 
 

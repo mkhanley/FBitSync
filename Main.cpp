@@ -12,7 +12,7 @@ int main() {
     for(vector<Tracker>::iterator i = trackers.begin(); i != trackers.end(); i++){
         Tracker t = *i;
         fbDongle.linkTracker(t);
-        fbDongle.unlinkTracker(t);
+        fbDongle.unlinkTracker();
     }
     cout << "Finished syncing "<< trackers.size() << " trackers" << endl;
     return 0;
