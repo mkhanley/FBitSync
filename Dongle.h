@@ -500,7 +500,7 @@ bool Dongle::trackerPresent(vector<Tracker> trackers, uint8_t* ID){
 
 void Dongle::initDongleError() {
     cout << "Dongle was not able to be initialised...\n"
-                    "Exiting..." << endl;
+            "Exiting..." << endl;
     exit(-1);
 }
 
@@ -541,7 +541,7 @@ bool Dongle::expectedDataMessage(uint8_t length, uint8_t* instruction) {
     }
     if(memcmp(readData, instruction, 2) != 0){
         cout << "Received instruction of " << (int)readData[1] << " " << (int)readData[2]
-            << ". Expected " << (int)instruction[0] << " " << (int)instruction[1] << endl;
+        << ". Expected " << (int)instruction[0] << " " << (int)instruction[1] << endl;
         return false;
     }
     return true;
@@ -587,14 +587,27 @@ Message Dongle::buildTrackerLinkMessage(Tracker &tracker) {
 }
 
 bool Dongle::getDump() {
-    uint8_t dumptype = 13;
-    Message getDump = Message(3,0xC010, &dumptype);
+    uint8_t dumpType = 13;
+    Message getDump = Message(3, 0xC010, &dumpType);
+    uint8_t expectedMessages[][2] = {{0xC0, 0x41},
+                                     {0xC0, 0x42}};
     dataWrite(getDump);
     dataRead();
+    if (!expectedDataMessage(3, expectedMessages[0]))
+        return false;
     readData[0] = 0;
-    while(readData[0] != 0xC0)
+    int bytesRead = 0;
+    while (readData[0] != 0xC0) {
         dataRead();
-    return false;
+        if(readData[0] != 0xC0)
+            bytesRead += readData[31];
+    }
+    cout << bytesRead << endl;
+    if (!expectedDataMessage(9, expectedMessages[1])){
+        cout << "Unexpected end of payload" << endl;
+        return false;
+    }
+    return true;
 }
 
 
