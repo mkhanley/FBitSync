@@ -163,6 +163,8 @@ public:
 
     bool linkTracker(Tracker &tracker);
 
+    bool getDump();
+
     void controlWrite(Message message);
 
     void dataWrite(Message message);
@@ -582,6 +584,17 @@ Message Dongle::buildTrackerLinkMessage(Tracker &tracker) {
     trackerData.insert(trackerData.begin()+7, &serviceUUID[0], &serviceUUID[2]);
     Message linkMessage = Message(11, 6, trackerData.data());
     return linkMessage;
+}
+
+bool Dongle::getDump() {
+    uint8_t dumptype = 13;
+    Message getDump = Message(3,0xC010, &dumptype);
+    dataWrite(getDump);
+    dataRead();
+    readData[0] = 0;
+    while(readData[0] != 0xC0)
+        dataRead();
+    return false;
 }
 
 
