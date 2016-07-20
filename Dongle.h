@@ -592,16 +592,27 @@ bool Dongle::getDump() {
     Message getDump = Message(3, 0xC010, &dumpType);
     uint8_t expectedMessages[][2] = {{0xC0, 0x41},
                                      {0xC0, 0x42}};
+    int vectSize = 50;
+    vector<vector<uint8_t >> info(vectSize, std::vector<uint8_t >(32));
+    vector<int> slipIndex = vector<int>();
     dataWrite(getDump);
     dataRead();
     if (!expectedDataMessage(3, expectedMessages[0]))
         return false;
     readData[0] = 0;
     int bytesRead = 0;
+    int count = 0;
     while (readData[0] != 0xC0) {
         dataRead();
-        if(readData[0] != 0xC0)
+        if(readData[0] != 0xC0) {
+            copy(&readData[0], &readData[31], info[count].begin());
             bytesRead += readData[31];
+            count++;
+            if(count == info.size()-1)
+                info.resize(info.size() * 2, vector<uint8_t>(32)); //Double size and init vectors
+            if(readData[0] == 0x33)
+                slipIndex.push_back(count);
+        }
     }
     cout << bytesRead << endl;
     if (!expectedDataMessage(9, expectedMessages[1])){
