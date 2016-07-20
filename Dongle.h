@@ -54,6 +54,7 @@ Message::Message(uint8_t length, int instruction, uint8_t * payload){
 }
 
 Message::~Message(){
+    delete[] payload;
     messageData.clear();
 }
 
@@ -165,9 +166,9 @@ public:
 
     bool getDump();
 
-    void controlWrite(Message message);
+    void controlWrite(Message &message);
 
-    void dataWrite(Message message);
+    void dataWrite(Message &message);
 
     bool isStatus();
 
@@ -386,7 +387,7 @@ int Dongle::dataRead(){
     }
 }
 
-void Dongle::controlWrite(Message message) {
+void Dongle::controlWrite(Message &message) {
     int dataWritten = 0;
     uint8_t * data = message.buildMessage();
     int dataLen = message.getLength();
@@ -398,7 +399,7 @@ void Dongle::controlWrite(Message message) {
         writeError(message, res);
 }
 
-void Dongle::dataWrite(Message message){
+void Dongle::dataWrite(Message &message){
     int dataWritten = 0;
     uint8_t * data = message.buildMessage();
     int dataLen = 32; //Always write 32 bytes to tracker
