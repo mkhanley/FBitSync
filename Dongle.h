@@ -419,7 +419,7 @@ void Dongle::controlPrint(uint8_t *data, int direction) {
         cout << "W --> ";
     cout << "( ";
     for (int i = 1; i < data[0]; ++i) {
-        cout << hex << (int)data[i] << " " ;
+        cout << hex << setfill('0') << setw(2) << (int)data[i] << " " ;
     }
     cout << ") - " << dec << (int)data[0] << endl;
 }
@@ -432,7 +432,7 @@ void Dongle::dataPrint(uint8_t *data, int direction) {
         cout << "W ==> ";
     cout << "[ ";
     for (int i = 0; i < data[31]; ++i) {
-        cout << hex << (int)data[i] << " " ;
+        cout << hex << setfill('0') << setw(2) <<(int)data[i] << " " ;
     }
     cout << "] - " << dec << (int)data[31] << endl;
 }
@@ -594,6 +594,7 @@ bool Dongle::getDump() {
                                      {0xC0, 0x42}};
     int vectSize = 50;
     vector<vector<uint8_t >> info;
+    info.reserve(vectSize);
     vector<int> slipIndex = vector<int>();
     vector<uint8_t> read = vector<uint8_t>(32);
     dataWrite(getDump);
