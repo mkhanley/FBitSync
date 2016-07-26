@@ -156,7 +156,9 @@ public:
 
     bool disconnect();
 
-    void exhaust();
+    void exhaustControl();
+
+    void exhaustData();
 
     bool getDongleInfo();
 
@@ -206,7 +208,8 @@ Dongle::Dongle(){
         else
             initDongleError();
         cout << "Emptying dongle buffer" << endl;
-        exhaust(); //Empty buffer in dongle
+        exhaustControl(); //Empty buffer in dongle
+        exhaustData();
         cout << "Buffer empty \n" << endl;
     }
     else
@@ -234,10 +237,16 @@ bool Dongle::disconnect(){
     return true;
 }
 
-void Dongle::exhaust(){
+void Dongle::exhaustControl(){
     int readData = 1;
     while (readData > 0)
         readData = controlRead();
+}
+
+void Dongle::exhaustData() {
+    int readData = 1;
+    while (readData > 0)
+        readData = dataRead();
 }
 
 bool Dongle::getDongleInfo(){
@@ -347,7 +356,7 @@ bool Dongle::unlinkTracker(){
         else if(!compareStatus(expectedStrings[i]))
             return false;
     }
-    exhaust();
+    exhaustControl();
     return true;
 }
 
