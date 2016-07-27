@@ -138,6 +138,8 @@ private:
 
     bool toggleTXPipe(uint8_t value);
 
+    void unslip(vector<vector<uint8_t>> &dump, vector<int> &slipIndex);
+
     void writeError(Message message, int writeRes);
 
     bool compareStatus(string expected);
@@ -384,10 +386,7 @@ int Dongle::dataRead(){
     int res = libusb_bulk_transfer(handle,readDataEndpoint, readData, 32, &readDataLen, 2000);
     if(res == 0 && readDataLen > 0){
         cout<<"Read Successful!"<<endl;
-        if(isStatus())
-            cout << &readData[2] << endl;
-        else
-            dataPrint(readData, readDir);
+        dataPrint(readData, readDir);
         return readDataLen;
     }
     else {
@@ -602,8 +601,8 @@ bool Dongle::getDump() {
     uint8_t expectedMessages[][2] = {{0xC0, 0x41},
                                      {0xC0, 0x42}};
     int vectSize = 50;
-    vector<vector<uint8_t >> info;
-    info.reserve(vectSize);
+    vector<vector<uint8_t >> dump;
+    dump.reserve(vectSize);
     vector<int> slipIndex = vector<int>();
     vector<uint8_t> read = vector<uint8_t>(32);
     dataWrite(getDump);
@@ -617,11 +616,11 @@ bool Dongle::getDump() {
         dataRead();
         if(readData[0] != 0xC0) {
             copy(&readData[0], &readData[31], read.begin());
-            info.insert(info.begin()+count, read);
+            dump.insert(dump.begin()+count, read);
             bytesRead += readData[31];
-            count++;
-            if(readData[0] == 0xC0)
+            if(readData[0] == 0xDB)
                 slipIndex.push_back(count);
+            count++;
         }
     }
     cout << bytesRead << endl;
@@ -629,7 +628,29 @@ bool Dongle::getDump() {
         cout << "Unexpected end of payload" << endl;
         return false;
     }
+    unslip(dump, slipIndex);
     return true;
+}
+
+void Dongle::unslip(vector<vector<uint8_t>> &dump, vector<int> &slipIndex) {
+    /*
+     * Removes SLIP encoding from dump
+     * 0xDB DC = 0xC0
+     * 0xDB DD = 0xDB
+     */
+    for(vector<int>::iterator i = slipIndex.begin(); i != slipIndex.end(); i++) {
+        vector<uint8_t> bytes = dump.at(*i);
+        if(bytes[1] == 0xDC){
+            bytes.erase(bytes.begin(), bytes.begin()+2);
+            bytes.insert(bytes.begin(), 0xC0);
+        }
+        if(bytes[1] == 0xDD){
+            bytes.erase(bytes.begin(), bytes.begin()+2);
+            bytes.insert(bytes.begin(), 0xDB);
+        }
+        dump.at(*i) = bytes;
+        cout << "Unsliped " << *i << endl;
+    }
 }
 
 
