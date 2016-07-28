@@ -604,7 +604,7 @@ bool Dongle::getDump() {
     vector<vector<uint8_t >> dump;
     dump.reserve(vectSize);
     vector<int> slipIndex = vector<int>();
-    vector<uint8_t> read = vector<uint8_t>(32);
+    vector<uint8_t> read = vector<uint8_t>(20);
     dataWrite(getDump);
     dataRead();
     if (!expectedDataMessage(3, expectedMessages[0]))
@@ -615,7 +615,7 @@ bool Dongle::getDump() {
     while (readData[0] != 0xC0) {
         dataRead();
         if(readData[0] != 0xC0) {
-            copy(&readData[0], &readData[31], read.begin());
+            copy(&readData[0], &readData[20], read.begin());
             dump.insert(dump.begin()+count, read);
             bytesRead += readData[31];
             if(readData[0] == 0xDB)
