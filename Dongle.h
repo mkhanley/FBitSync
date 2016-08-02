@@ -604,22 +604,23 @@ bool Dongle::getDump() {
     Message getDump = Message(3, 0xC010, &dumpType);
     uint8_t expectedMessages[][2] = {{0xC0, 0x41},
                                      {0xC0, 0x42}};
-    int vectSize = 50;
+    int vectSize = 50; //Try to reduce realocations
     vector<vector<uint8_t >> dump;
     dump.reserve(vectSize);
     vector<int> slipIndex = vector<int>();
     vector<uint8_t> read = vector<uint8_t>(20);
+    vector<uint8_t> footer = vector<uint8_t>();
     dataWrite(getDump);
     dataRead();
     if (!expectedDataMessage(3, expectedMessages[0]))
         return false;
-    readData[0] = 0;
+    readData[0] = 0; //Clear first byte so we enter while loop
     int bytesRead = 0;
     int count = 0;
     while (readData[0] != 0xC0) {
         dataRead();
+        int length = readData[31];
         if(readData[0] != 0xC0) {
-            int length = readData[31];
             if(length != 20)
                 read.resize(length);
             copy(&readData[0], &readData[length], read.begin());
@@ -629,6 +630,9 @@ bool Dongle::getDump() {
                 slipIndex.push_back(count);
             count++;
         }
+        else{
+            copy(&readData[0], &readData[length], footer.begin());
+        }
     }
     cout << bytesRead << endl;
     if (!expectedDataMessage(9, expectedMessages[1])){
@@ -637,6 +641,7 @@ bool Dongle::getDump() {
     }
     unslip(dump, slipIndex);
     unsigned short calculatedCRC = getCRC(dump);
+    //TODO compare crc to value in footer
     return true;
 }
 
@@ -662,11 +667,11 @@ void Dongle::unslip(vector<vector<uint8_t>> &dump, vector<int> &slipIndex) {
 }
 
 unsigned short Dongle::getCRC(vector<vector<uint8_t>> &dump) {
-    boost::crc_optimal<16, 0x1021, 0, 0x0, false, false>  crc_ccitt2;
+    boost::crc_optimal<16, 0x1021, 0, 0x0, false, false>  crc;
     for(vector<vector<uint8_t>>::iterator i = (dump.begin()); i != (dump.end()); i++){
-        crc_ccitt2 = for_each((*i).begin(), (*i).end(), crc_ccitt2);
+        crc = for_each((*i).begin(), (*i).end(), crc);
     }
-    return crc_ccitt2();
+    return crc();
 }
 
 
