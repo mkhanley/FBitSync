@@ -3,8 +3,10 @@
 #include <libusb-1.0/libusb.h>
 #include <boost/uuid/uuid.hpp>
 #include <algorithm>
+#include <iterator>
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/crc.hpp>
 #include "Tracker.h"
 
 #ifndef FITBIT_DONGLE_H
@@ -139,6 +141,8 @@ private:
     bool toggleTXPipe(uint8_t value);
 
     void unslip(vector<vector<uint8_t>> &dump, vector<int> &slipIndex);
+
+    unsigned short getCRC(vector<vector<uint8_t>> &dump);
 
     void writeError(Message message, int writeRes);
 
@@ -615,9 +619,12 @@ bool Dongle::getDump() {
     while (readData[0] != 0xC0) {
         dataRead();
         if(readData[0] != 0xC0) {
-            copy(&readData[0], &readData[20], read.begin());
+            int length = readData[31];
+            if(length != 20)
+                read.resize(length);
+            copy(&readData[0], &readData[length], read.begin());
             dump.insert(dump.begin()+count, read);
-            bytesRead += readData[31];
+            bytesRead += length;
             if(readData[0] == 0xDB)
                 slipIndex.push_back(count);
             count++;
@@ -629,6 +636,7 @@ bool Dongle::getDump() {
         return false;
     }
     unslip(dump, slipIndex);
+    unsigned short calculatedCRC = getCRC(dump);
     return true;
 }
 
@@ -651,6 +659,14 @@ void Dongle::unslip(vector<vector<uint8_t>> &dump, vector<int> &slipIndex) {
         dump.at(*i) = bytes;
         cout << "Unsliped " << *i << endl;
     }
+}
+
+unsigned short Dongle::getCRC(vector<vector<uint8_t>> &dump) {
+    boost::crc_optimal<16, 0x1021, 0, 0x0, false, false>  crc_ccitt2;
+    for(vector<vector<uint8_t>>::iterator i = (dump.begin()); i != (dump.end()); i++){
+        crc_ccitt2 = for_each((*i).begin(), (*i).end(), crc_ccitt2);
+    }
+    return crc_ccitt2();
 }
 
 
