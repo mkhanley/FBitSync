@@ -609,7 +609,7 @@ bool Dongle::getDump() {
     dump.reserve(vectSize);
     vector<int> slipIndex = vector<int>();
     vector<uint8_t> read = vector<uint8_t>(20);
-    vector<uint8_t> footer = vector<uint8_t>();
+    vector<uint8_t> footer;
     dataWrite(getDump);
     dataRead();
     if (!expectedDataMessage(3, expectedMessages[0]))
@@ -631,6 +631,7 @@ bool Dongle::getDump() {
             count++;
         }
         else{
+            footer = vector<uint8_t>(length);
             copy(&readData[0], &readData[length], footer.begin());
         }
     }
@@ -671,7 +672,7 @@ unsigned short Dongle::getCRC(vector<vector<uint8_t>> &dump) {
     for(vector<vector<uint8_t>>::iterator i = (dump.begin()); i != (dump.end()); i++){
         crc = for_each((*i).begin(), (*i).end(), crc);
     }
-    return crc();
+    return static_cast<unsigned short>(crc());
 }
 
 
