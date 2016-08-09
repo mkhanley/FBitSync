@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Dongle.cpp"
+#include "Base64.cpp"
 
 using namespace std;
 
