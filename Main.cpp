@@ -1,5 +1,5 @@
 #include <iostream>
-#include "Dongle.h"
+#include "Dongle.cpp"
 
 using namespace std;
 
