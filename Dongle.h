@@ -93,7 +93,7 @@ public:
 
     bool linkTracker(Tracker &tracker);
 
-    bool getDump();
+    vector<uint8_t> getDump();
 
     void controlWrite(Message &message);
 

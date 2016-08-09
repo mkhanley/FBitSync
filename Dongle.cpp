@@ -489,7 +489,7 @@ Message Dongle::buildTrackerLinkMessage(Tracker &tracker) {
     return linkMessage;
 }
 
-bool Dongle::getDump() {
+vector<uint8_t> Dongle::getDump() {
     uint8_t dumpType = 13;
     Message getDump = Message(3, 0xC010, &dumpType);
     uint8_t expectedMessages[][2] = {{0xC0, 0x41},
@@ -503,7 +503,7 @@ bool Dongle::getDump() {
     dataWrite(getDump);
     dataRead();
     if (!expectedDataMessage(3, expectedMessages[0]))
-        return false;
+        return vector<uint8_t>();
     readData[0] = 0; //Clear first byte so we enter while loop
     int bytesRead = 0;
     int count = 0;
@@ -528,12 +528,17 @@ bool Dongle::getDump() {
     cout << bytesRead << endl;
     if (!expectedDataMessage(9, expectedMessages[1])){
         cout << "Unexpected end of payload" << endl;
-        return false;
+        return vector<uint8_t>();
     }
     unslip(dump, slipIndex);
     unsigned short calculatedCRC = getCRC(dump);
     //TODO compare crc to value in footer
-    return true;
+    vector<uint8_t> dataDump = vector<uint8_t>();
+    dataDump.reserve(bytesRead);
+    for(vector<vector<uint8_t>>::iterator i = (dump.begin()); i != (dump.end()); i++){
+        copy((*i).begin(), (*i).end(), back_inserter(dataDump));
+    }
+    return dataDump;
 }
 
 void Dongle::unslip(vector<vector<uint8_t>> &dump, vector<int> &slipIndex) {
