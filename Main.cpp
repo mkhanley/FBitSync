@@ -19,6 +19,7 @@ int main() {
         //cout << encodedDump << endl;
         string xml = buildSyncMessage(encodedDump, fbDongle, t);
         cout << xml << endl;
+        sendSync(xml);
         fbDongle.unlinkTracker();
     }
     cout << "Finished syncing "<< trackers.size() << " trackers" << endl;

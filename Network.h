@@ -6,7 +6,11 @@
 #include <iostream>
 #include "Tracker.h"
 #include "Dongle.h"
+#include "cpr/cpr.h"
+
 
 std::string buildSyncMessage(std::string encodedData, Dongle &dongle, Tracker &tracker);
+
+bool sendSync(std::string xml);
 
 #endif //FITBIT_NETWORK_H

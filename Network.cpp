@@ -22,7 +22,7 @@ std::string buildSyncMessage(std::string encodedData, Dongle &dongle, Tracker &t
     dongleVersion.put("<xmlattr>.major", dongle.getVersionMajor());
     dongleVersion.put("<xmlattr>.minor", dongle.getVersionMinor());
     trackerTree.put("<xmlattr>.tracker-id", tracker.getIDasString());
-    data.put("","TEST");
+    data.put("", encodedData);
 
     info.add_child("client-id", id);
     info.add_child("client-version", clientVersion);
@@ -40,3 +40,13 @@ std::string buildSyncMessage(std::string encodedData, Dongle &dongle, Tracker &t
             boost::property_tree::xml_writer_make_settings<std::string>('\t', 1));
     return stream.str();
 }
+
+bool sendSync(std::string xml) {
+    auto r = cpr::Post(cpr::Url{"http://api.fitbit.com/tracker/client/message"},
+                       cpr::Body{xml},
+                       cpr::Header{{"Content-Type", "text/xml"}});
+    std::cout << r.text << std::endl;
+
+}
+
+
