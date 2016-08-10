@@ -1,6 +1,11 @@
 #ifndef FITBIT_TRACKER_H
 #define FITBIT_TRACKER_H
 
+#include <cstdint>
+#include <algorithm>
+#include <iostream>
+#include <iomanip>
+
 class Tracker{
 private:
     uint8_t trackerID[6];

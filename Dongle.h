@@ -1,7 +1,16 @@
-#include "Tracker.cpp"
-
 #ifndef FITBIT_DONGLE_H
 #define FITBIT_DONGLE_H
+
+#include "Tracker.h"
+#include <iostream>
+#include <iomanip>
+#include <libusb-1.0/libusb.h>
+#include <boost/uuid/uuid.hpp>
+#include <algorithm>
+#include <iterator>
+#include <boost/lexical_cast.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/crc.hpp>
 
 using namespace std;
 

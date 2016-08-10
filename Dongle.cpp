@@ -1,12 +1,3 @@
-#include <iostream>
-#include <iomanip>
-#include <libusb-1.0/libusb.h>
-#include <boost/uuid/uuid.hpp>
-#include <algorithm>
-#include <iterator>
-#include <boost/lexical_cast.hpp>
-#include <boost/uuid/uuid_io.hpp>
-#include <boost/crc.hpp>
 #include "Dongle.h"
 
 using namespace std;

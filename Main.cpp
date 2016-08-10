@@ -1,6 +1,7 @@
 #include <iostream>
-#include "Dongle.cpp"
-#include "Base64.cpp"
+#include "Dongle.h"
+#include "Base64.h"
+#include "Network.h"
 
 using namespace std;
 
@@ -15,7 +16,9 @@ int main() {
         fbDongle.linkTracker(t);
         vector<uint8_t> dump = fbDongle.getDump();
         string encodedDump = base64_encode(dump.data(), dump.size());
-        cout << encodedDump << endl;
+        //cout << encodedDump << endl;
+        string xml = buildSyncMessage(encodedDump);
+        cout << xml << endl;
         fbDongle.unlinkTracker();
     }
     cout << "Finished syncing "<< trackers.size() << " trackers" << endl;
