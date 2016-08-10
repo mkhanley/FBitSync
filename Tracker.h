@@ -25,6 +25,7 @@ public:
     uint8_t getAddressType();
     uint8_t * getAttributes();
     uint8_t * getServiceUUID();
+    std::string getIDasString();
 
 
     void printInfo();

@@ -141,7 +141,11 @@ bool Dongle::getDongleInfo(){
     Message message = Message(2,1,NULL);
     controlWrite(message);
     controlRead();
-    return expectedControlMessage(22, 8);
+    if(!expectedControlMessage(22, 8))
+        return false;
+    versionMajor = readData[2];
+    versionMinor = readData[3];
+    return true;
 }
 
 vector<Tracker> Dongle::discover(){
@@ -560,3 +564,17 @@ unsigned short Dongle::getCRC(vector<vector<uint8_t>> &dump) {
     }
     return static_cast<unsigned short>(crc());
 }
+
+uint8_t Dongle::getVersionMajor() {
+    return versionMajor;
+}
+
+uint8_t Dongle::getVersionMinor() {
+    return versionMinor;
+}
+
+boost::uuids::uuid Dongle::getUUID() {
+    return uuid;
+}
+
+

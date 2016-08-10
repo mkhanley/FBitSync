@@ -51,6 +51,9 @@ private:
     uint8_t writeDataEndpoint = 0x01;
     int readDataLen = 0;
     boost::uuids::uuid uuid;
+    uint8_t versionMajor;
+    uint8_t versionMinor;
+
 
     bool initUSB();
 
@@ -119,5 +122,11 @@ public:
     void dataPrint(uint8_t *data, int direction);
 
     bool unlinkTracker();
+
+    uint8_t getVersionMajor();
+
+    uint8_t getVersionMinor();
+
+    boost::uuids::uuid getUUID();
 };
 #endif //FITBIT_DONGLE_H

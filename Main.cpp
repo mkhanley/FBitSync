@@ -17,7 +17,7 @@ int main() {
         vector<uint8_t> dump = fbDongle.getDump();
         string encodedDump = base64_encode(dump.data(), dump.size());
         //cout << encodedDump << endl;
-        string xml = buildSyncMessage(encodedDump);
+        string xml = buildSyncMessage(encodedDump, fbDongle, t);
         cout << xml << endl;
         fbDongle.unlinkTracker();
     }

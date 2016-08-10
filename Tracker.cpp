@@ -1,3 +1,4 @@
+#include <sstream>
 #include "Tracker.h"
 Tracker::Tracker(){
 
@@ -51,3 +52,14 @@ void Tracker::printInfo(){
     std::cout << "Attributes " << std::hex << (int)attributes[0] << " " <<(int)attributes[1] << std::dec << std::endl;
     std::cout << "Recently Synced " << recentlySynced << std::endl;
 }
+
+std::string Tracker::getIDasString() {
+    std::stringstream stream;
+    stream << std::hex;
+    for (int i = 0; i < 6; i++){
+        //std::cout << std::hex << (int)(this->trackerID[i]) << " ";
+        stream << std::setfill('0') << std::setw(2) << (int)(this->trackerID[i]);
+    }
+    return stream.str();
+}
+
