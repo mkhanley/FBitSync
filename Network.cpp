@@ -41,12 +41,22 @@ std::string buildSyncMessage(std::string encodedData, Dongle &dongle, Tracker &t
     return stream.str();
 }
 
-bool sendSync(std::string xml) {
+string sendSync(std::string xml) {
     auto r = cpr::Post(cpr::Url{"http://api.fitbit.com/tracker/client/message"},
                        cpr::Body{xml},
                        cpr::Header{{"Content-Type", "text/xml"}});
-    std::cout << r.text << std::endl;
-
+    return r.text;
 }
+
+vector<uint8_t> parseResponse(std::string xml) {
+    using boost::property_tree::ptree;
+    ptree pt;
+    istringstream stream(xml);
+    boost::property_tree::xml_parser::read_xml(stream, pt, boost::property_tree::xml_parser::trim_whitespace);
+    cout << pt.get<std::string>("galileo-server.tracker.data") << endl;
+    return std::vector<uint8_t>();
+}
+
+
 
 
