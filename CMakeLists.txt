@@ -3,6 +3,7 @@ project(Fitbit)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 add_subdirectory(lib/cpr)
+set(${USE_SYSTEM_CURL} ON)
 
 include_directories (include ${LIBUSB_1_INCLUDE_DIRS} ${CPR_INCLUDE_DIRS})
 
