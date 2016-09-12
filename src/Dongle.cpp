@@ -47,7 +47,7 @@ uint8_t* Message::buildMessage() {
         messageData.push_back(length);
     }
     else if(!instruction){
-        messageData.insert(messageData.end(), &payload[0], &payload[length - 2]);
+        messageData.insert(messageData.end(), &payload[0], &payload[length]);
         while(messageData.size() < 31)
             messageData.push_back(0);
         messageData.push_back(length);
@@ -627,6 +627,7 @@ bool Dongle::startResponse(unsigned short responseLength) {
 
 void Dongle::sendResponse(vector<uint8_t> &response){
     int length = static_cast<int>(response.size());
+    cout << length << endl;
     int currentByte;
     int bytesWritten = 0;
     int writeLength = 20;
