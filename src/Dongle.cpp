@@ -20,6 +20,14 @@ Message::Message(uint8_t length, int instruction, uint8_t * payload){
     insToArr();
 }
 
+Message::Message(uint8_t length, uint8_t * payload){
+    this->length = length;
+    this->payload = new uint8_t[length];
+    copy(&payload[0], &payload[length], this->payload);
+    this->messageData = vector<uint8_t>();
+}
+
+
 Message::~Message(){
     delete[] payload;
     messageData.clear();
@@ -33,6 +41,12 @@ uint8_t* Message::buildMessage() {
     if(instruction > 0xFF){ // Message to tracker
         messageData.push_back(insArr[1]);
         messageData.push_back(insArr[0]);
+        messageData.insert(messageData.end(), &payload[0], &payload[length - 2]);
+        while(messageData.size() < 31)
+            messageData.push_back(0);
+        messageData.push_back(length);
+    }
+    else if(!instruction){
         messageData.insert(messageData.end(), &payload[0], &payload[length - 2]);
         while(messageData.size() < 31)
             messageData.push_back(0);
@@ -557,6 +571,15 @@ void Dongle::unslip(vector<vector<uint8_t>> &dump, vector<int> &slipIndex) {
     }
 }
 
+void Dongle::slip(vector<uint8_t> &response, int index){
+    response[index] = 0xDB;
+    vector<uint8_t>::iterator replace = response.begin() + index;
+    if(response[index] == 0xC0)
+        response.insert(replace, 0xDC);
+    else
+        response.insert(replace, 0xDD);
+}
+
 unsigned short Dongle::getCRC(vector<vector<uint8_t>> &dump) {
     boost::crc_optimal<16, 0x1021, 0, 0x0, false, false>  crc;
     for(vector<vector<uint8_t>>::iterator i = (dump.begin()); i != (dump.end()); i++){
@@ -577,15 +600,14 @@ boost::uuids::uuid Dongle::getUUID() {
     return uuid;
 }
 
-bool Dongle::passResponse(vector<uint8_t> &response) {
+bool Dongle::startResponse(unsigned short responseLength) {
     vector<uint8_t> startBytes = vector<uint8_t>();
     startBytes.reserve(7);
     uint8_t dumpType = 4;
 
-    unsigned short length = response.size();
     uint8_t lengthArr[2];
-    lengthArr[0] = static_cast<uint8_t>(length & 0x00FFu);
-    lengthArr[1] = static_cast<uint8_t>((length & 0xFF00u) >> 8);
+    lengthArr[0] = static_cast<uint8_t>(responseLength & 0x00FFu);
+    lengthArr[1] = static_cast<uint8_t>((responseLength & 0xFF00u) >> 8);
 
     //copy(&lengthArr[0], &lengthArr[1], startBytes.begin());
     startBytes.insert(startBytes.begin(), dumpType);
@@ -600,10 +622,27 @@ bool Dongle::passResponse(vector<uint8_t> &response) {
     uint8_t expected[] = {0xc0, 0x12};
     if(!expectedDataMessage(5, expected))
         return false;
-
-
-    return false;
+    return true;
 }
+
+void Dongle::sendResponse(vector<uint8_t> &response){
+    int length = static_cast<int>(response.size());
+    int currentByte;
+    int bytesWritten = 0;
+    int writeLength = 20;
+    while(bytesWritten != length){
+        if((bytesWritten + writeLength) > length)
+            writeLength = length - bytesWritten;
+        if(response[bytesWritten] == 0xC0 || response[bytesWritten] == 0xDB)
+            slip(response, bytesWritten);
+        uint8_t * byteptr = (response.data()) + bytesWritten;
+        Message data = Message(writeLength, byteptr);
+        dataWrite(data);
+        dataRead();
+        bytesWritten += writeLength;
+    }
+}
+
 
 
 

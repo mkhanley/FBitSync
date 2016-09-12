@@ -27,6 +27,8 @@ private:
 public:
     Message(uint8_t length, int instruction, uint8_t * payload);
 
+    Message(uint8_t length, uint8_t * payload);
+
     ~Message();
 
     uint8_t* buildMessage();
@@ -75,6 +77,8 @@ private:
 
     void unslip(vector<vector<uint8_t>> &dump, vector<int> &slipIndex);
 
+    void slip(vector<uint8_t> &response, int index);
+
     unsigned short getCRC(vector<vector<uint8_t>> &dump);
 
     void writeError(Message message, int writeRes);
@@ -107,7 +111,9 @@ public:
 
     vector<uint8_t> getDump();
 
-    bool passResponse(vector<uint8_t> &response);
+    bool startResponse(unsigned short responseLength);
+
+    void sendResponse(vector<uint8_t> &response);
 
     void controlWrite(Message &message);
 

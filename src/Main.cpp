@@ -23,7 +23,8 @@ int main() {
         string serverData = parseResponse(serverResponse);
         string decodedData = base64_decode(serverData);
         vector<uint8_t> responseData = vector<uint8_t>(decodedData.begin(), decodedData.end());
-        fbDongle.passResponse(responseData);
+        fbDongle.startResponse((responseData.size()));
+        fbDongle.sendResponse(responseData);
         fbDongle.unlinkTracker();
     }
     cout << "Finished syncing "<< trackers.size() << " trackers" << endl;
