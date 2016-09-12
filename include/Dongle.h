@@ -113,7 +113,7 @@ public:
 
     bool startResponse(unsigned short responseLength);
 
-    void sendResponse(vector<uint8_t> &response);
+    bool sendResponse(vector<uint8_t> &response);
 
     void controlWrite(Message &message);
 

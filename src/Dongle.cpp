@@ -625,12 +625,13 @@ bool Dongle::startResponse(unsigned short responseLength) {
     return true;
 }
 
-void Dongle::sendResponse(vector<uint8_t> &response){
+bool Dongle::sendResponse(vector<uint8_t> &response){
     int length = static_cast<int>(response.size());
     cout << length << endl;
     int currentByte;
     int bytesWritten = 0;
     int writeLength = 20;
+    uint8_t iteration = 1;
     while(bytesWritten != length){
         if((bytesWritten + writeLength) > length)
             writeLength = length - bytesWritten;
@@ -640,8 +641,16 @@ void Dongle::sendResponse(vector<uint8_t> &response){
         Message data = Message(writeLength, byteptr);
         dataWrite(data);
         dataRead();
+        uint8_t expectedInstruction[] = {0xc0, 0x13};
+        if(!expectedDataMessage(5, expectedInstruction))
+            return false;
+        uint8_t sequenceByte = readData[2];
+        if(sequenceByte % 0x04 != 0 && (sequenceByte >> 4) !=(iteration % 0x0F))
+            return false; //Incorrect sequence number
         bytesWritten += writeLength;
+        iteration++;
     }
+    return true;
 }
 
 
