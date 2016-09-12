@@ -577,4 +577,34 @@ boost::uuids::uuid Dongle::getUUID() {
     return uuid;
 }
 
+bool Dongle::passResponse(vector<uint8_t> &response) {
+    vector<uint8_t> startBytes = vector<uint8_t>();
+    startBytes.reserve(7);
+    uint8_t dumpType = 4;
+
+    unsigned short length = response.size();
+    uint8_t lengthArr[2];
+    lengthArr[0] = static_cast<uint8_t>(length & 0x00FFu);
+    lengthArr[1] = static_cast<uint8_t>((length & 0xFF00u) >> 8);
+
+    //copy(&lengthArr[0], &lengthArr[1], startBytes.begin());
+    startBytes.insert(startBytes.begin(), dumpType);
+    startBytes.push_back(lengthArr[0]);
+    startBytes.push_back(lengthArr[1]);
+    startBytes.push_back(0);
+    startBytes.push_back(0);
+    startBytes.push_back(0);
+    Message startTransfer = Message(9, 0xC024, startBytes.data());
+    dataWrite(startTransfer);
+    dataRead();
+    uint8_t expected[] = {0xc0, 0x12};
+    if(!expectedDataMessage(5, expected))
+        return false;
+
+
+    return false;
+}
+
+
+
 

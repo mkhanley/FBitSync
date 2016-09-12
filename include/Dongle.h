@@ -107,6 +107,8 @@ public:
 
     vector<uint8_t> getDump();
 
+    bool passResponse(vector<uint8_t> &response);
+
     void controlWrite(Message &message);
 
     void dataWrite(Message &message);

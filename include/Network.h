@@ -13,6 +13,6 @@ std::string buildSyncMessage(std::string encodedData, Dongle &dongle, Tracker &t
 
 std::string sendSync(std::string xml);
 
-vector<uint8_t> parseResponse(std::string xml);
+string parseResponse(std::string xml);
 
 #endif //FITBIT_NETWORK_H
