@@ -27,6 +27,9 @@ int main() {
             fbDongle.startResponse((responseData.size()));
             fbDongle.sendResponse(responseData);
         }
+        else{
+            cout << "Unable to synchronise tracker. Server response:\n" + serverResponse <<endl;
+        }
         fbDongle.unlinkTracker();
     }
     cout << "Finished syncing "<< trackers.size() << " trackers" << endl;
