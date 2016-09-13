@@ -42,7 +42,7 @@ std::string buildSyncMessage(std::string encodedData, Dongle &dongle, Tracker &t
 }
 
 string sendSync(std::string xml) {
-    auto r = cpr::Post(cpr::Url{"http://api.fitbit.com/tracker/client/message"},
+    auto r = cpr::Post(cpr::Url{"https://api.fitbit.com/tracker/client/message"},
                        cpr::Body{xml},
                        cpr::Header{{"Content-Type", "text/xml"}});
     return r.text;
