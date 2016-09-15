@@ -12,4 +12,5 @@ FIND_PACKAGE( Boost 1.40 COMPONENTS program_options REQUIRED )
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 
 add_executable(FBSync ${SOURCE_FILES})
+add_custom_target(valgrind valgrind ./FBSync)
 target_link_libraries(FBSync usb-1.0 ${Boost_Libraries} ${CPR_LIBRARIES})
