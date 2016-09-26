@@ -1,7 +1,6 @@
 FBit Sync
 ===================
 
-**Not working as of 12/11/16 due to update in Fitbit API**
 
 FBit Sync is a client to synchonise Fitbit devices with a Fitbit account using the supplied Fitbit dongle on Linux systems.
 
@@ -21,7 +20,7 @@ Dependencies
   
   libssl-dev
   
-	libssh2-dev
+  libssh2-dev
 
 Execution
 ---------
@@ -40,6 +39,8 @@ Execute with `./FBitSync`
 Supported Devices
 -----------------
 Charge HR
+
+Force
 
 
 Credit
