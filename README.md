@@ -24,6 +24,8 @@ Dependencies
 
 Execution
 ---------
+Clone cpr with `git submodule update --init --recursive`
+
 Build and compile the project with cmake and make
 
 Copy the 99-FBit.rules file to /etc/udev/rules.d
